@@ -177,6 +177,40 @@
       border-radius: var(--radius);
       background: #000;
     }
+
+    /* ⭐ IMAGE PREVIEW + FULLSCREEN BUTTON */
+    #previewContainer {
+      position: relative;
+      width: 100%;
+      margin-bottom: 15px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: none;
+    }
+
+    #previewImage {
+      width: 100%;
+      border-radius: var(--radius);
+      display: block;
+    }
+
+    #fullscreenBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
   </style>
 </head>
 <body>
@@ -210,8 +244,15 @@
     <!-- Viewer Page -->
     <div id="viewerPage" class="card hidden animated">
       <div class="back-btn" id="backToSearch">← Back to Search</div>
+
+      <!-- ⭐ IMAGE PREVIEW WITH FULLSCREEN BUTTON -->
+      <div id="previewContainer">
+        <img id="previewImage" />
+        <button id="fullscreenBtn">⛶</button>
+      </div>
+
       <h3 id="viewerTitle"></h3>
-      <iframe id="viewerFrame" allowfullscreen></iframe>
+      <iframe id="viewerFrame" allowfullscreen style="display:none;"></iframe>
     </div>
 
   </div>
@@ -233,6 +274,11 @@
     const viewerFrame = document.getElementById("viewerFrame");
     const backToSearch = document.getElementById("backToSearch");
 
+    // ⭐ IMAGE PREVIEW ELEMENTS
+    const previewContainer = document.getElementById("previewContainer");
+    const previewImage = document.getElementById("previewImage");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+
     // Page Switch
     goUpload.onclick = () => {
       home.classList.add("hidden");
@@ -246,17 +292,16 @@
       viewerPage.classList.add("hidden");
       home.classList.remove("hidden");
       viewerFrame.src = "";
+      previewContainer.style.display = "none";
     };
 
-    // ✅ Handle Upload (only allow Archive.org URLs)
+    // ========== UPLOAD HANDLER (unchanged) ==========
     form.onsubmit = async (e) => {
       e.preventDefault();
       message.textContent = "Uploading...";
       message.className = "";
 
       const archiveUrl = document.getElementById("archive_url").value.trim();
-
-      // ✅ Allow only valid archive.org URLs
       const archivePattern = /^https?:\/\/(www\.)?archive\.org\/(details|embed)\/[A-Za-z0-9_\-]+/i;
       if (!archivePattern.test(archiveUrl)) {
         message.textContent = "❌ Please enter a valid Archive.org URL!";
@@ -293,7 +338,7 @@
       }
     };
 
-    // ✅ Handle Search (hide phone number)
+    // ========== SEARCH HANDLER (unchanged) ==========
     searchBtn.onclick = async () => {
       const query = searchInput.value.trim();
       if (!query) return alert("Please enter title, username, or ID to search!");
@@ -331,11 +376,17 @@
         `).join("");
 
         document.querySelectorAll(".result-card").forEach(card => {
-          card.onclick = () => {
+          card.onclick = async () => {
             const url = card.dataset.url;
             const title = card.dataset.title;
+
             viewerTitle.textContent = title;
-            viewerFrame.src = url;
+            viewerFrame.style.display = "none"; // hide iframe
+            previewContainer.style.display = "block";
+
+            // ⭐ LOAD METADATA IMAGE
+            await loadPreviewImage(url);
+
             home.classList.add("hidden");
             viewerPage.classList.remove("hidden");
           };
@@ -346,6 +397,44 @@
         searchResults.innerHTML = `<p style="color:#f87171;">⚠️ Error fetching results.</p>`;
       }
     };
+
+    // ============================================================
+    // ⭐ FUNCTION TO EXTRACT IMAGE FROM ARCHIVE METADATA
+    // ============================================================
+    async function loadPreviewImage(archiveUrl) {
+      previewImage.style.display = "none";
+
+      try {
+        const identifier = archiveUrl.split("/").pop();
+        const metaUrl = `https://archive.org/metadata/${identifier}`;
+
+        const response = await fetch(metaUrl);
+        const metadata = await response.json();
+
+        if (!metadata || !metadata.files) return;
+
+        // Look for best jpeg/png
+        const imageFile = metadata.files.find(f =>
+          /\.(jpg|jpeg|png)$/i.test(f.name)
+        );
+
+        if (!imageFile) return;
+
+        previewImage.src = `https://archive.org/download/${identifier}/${imageFile.name}`;
+        previewImage.style.display = "block";
+
+      } catch (err) {
+        console.log("Image extraction error:", err);
+      }
+    }
+
+    // ⭐ FULLSCREEN BUTTON
+    fullscreenBtn.onclick = () => {
+      if (previewImage.requestFullscreen) previewImage.requestFullscreen();
+      else if (previewImage.webkitRequestFullscreen) previewImage.webkitRequestFullscreen();
+      else if (previewImage.msRequestFullscreen) previewImage.msRequestFullscreen();
+    };
+
   </script>
 </body>
 </html>
