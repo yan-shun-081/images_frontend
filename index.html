@@ -32,6 +32,7 @@
       border-radius: 1rem;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       transition: all 0.3s ease-in-out;
+      position: relative;
     }
     .glass:hover {
       transform: scale(1.01);
@@ -72,13 +73,32 @@
       border-radius: 1rem;
       overflow: hidden;
       background: #0f172a;
+      min-height: 450px;
     }
 
-    /* === ULTRA-SLIM TRAIN ANIMATION (0.7 cm ≈ 26px) === */
+    /* Fullscreen button */
+    .fullscreen-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(59, 130, 246, 0.7);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .fullscreen-btn:hover {
+      background: rgba(37, 99, 235, 0.9);
+    }
+
+    /* Train animation */
     .train-container {
       position: relative;
       width: 100%;
-      height: 26px; /* ≈ 0.7 cm */
+      height: 26px;
       perspective: 1000px;
       overflow: hidden;
       background: linear-gradient(180deg, #0f172a 0%, #1e293b 80%, #111827 100%);
@@ -112,7 +132,6 @@
       transform: rotateY(8deg);
       animation: trainMove 9s linear infinite;
     }
-
     @keyframes trainMove {
       0% { left: -160px; }
       50% { left: calc(100% - 100px); }
@@ -151,7 +170,7 @@
     @media (max-width: 640px) {
       h1 { font-size: 1.8rem; }
       h2 { font-size: 1.25rem; }
-      iframe { height: 350px !important; }
+      iframe { min-height: 350px !important; }
       .train-container { height: 22px; }
       .car { width: 50px; height: 12px; }
     }
@@ -179,7 +198,11 @@
   <!-- SECTION 1: SEARCH & UPLOAD -->
   <section id="metadata" class="w-full max-w-5xl glass p-6 fade-in">
     <h2 class="text-2xl font-semibold text-blue-300 mb-4">🔍 Search & Upload Here</h2>
-    <iframe src="images_metadata_frontend.html" class="h-[450px] bg-slate-900"></iframe>
+    
+    <!-- Fullscreen button -->
+    <button class="fullscreen-btn" onclick="openFullscreen('iframeMetadata')">⛶ Fullscreen</button>
+
+    <iframe id="iframeMetadata" src="images_metadata_frontend.html" class="h-[450px] bg-slate-900"></iframe>
   </section>
 
   <!-- SECTION 2: IMAGE DISPLAY + MINI TRAIN -->
@@ -205,8 +228,11 @@
       </div>
     </div>
 
+    <!-- Fullscreen button -->
+    <button class="fullscreen-btn" onclick="openFullscreen('iframeImages')">⛶ Fullscreen</button>
+
     <!-- Embedded Image Display -->
-    <iframe src="images_displaying_frontend.html" class="h-[500px] bg-slate-900"></iframe>
+    <iframe id="iframeImages" src="images_displaying_frontend.html" class="h-[500px] bg-slate-900"></iframe>
   </section>
 
   <!-- FOOTER -->
@@ -214,5 +240,18 @@
     <p>© 2025 Free Images Content · Built with ❤️ by <span class="text-blue-400 font-semibold">YAN</span></p>
   </footer>
 
+  <!-- Fullscreen JS -->
+  <script>
+    function openFullscreen(iframeId) {
+      const iframe = document.getElementById(iframeId);
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+      } else if (iframe.webkitRequestFullscreen) { /* Safari */
+        iframe.webkitRequestFullscreen();
+      } else if (iframe.msRequestFullscreen) { /* IE11 */
+        iframe.msRequestFullscreen();
+      }
+    }
+  </script>
 </body>
 </html>
