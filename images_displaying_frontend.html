@@ -381,7 +381,7 @@
     // Restore elapsed time from sessionStorage (temporary)
     let elapsed = Number(sessionStorage.getItem('elapsed')) || 0;
     let limitIndex = 0;               // next limit to check
-    let unlockedUntil = 0;             // timestamp (ms) until user is free
+    let unlockedUntil = 0;            // timestamp (ms) until user is free
 
     const AD_GATE = document.getElementById('adGate');
     const WATCH_BTN = document.getElementById('watchAdBtn');
@@ -391,15 +391,17 @@
     // --------------------------------------------------------------
     setInterval(() => {
       elapsed++;
-      sessionStorage.setItem('elapsed', elapsed); // persist for this session
+      sessionStorage.setItem('elapsed', elapsed);
 
-      // If a 5‑minute unlock is active, ignore limits.
+      // 🔒 If unlocked, do NOTHING
       if (Date.now() < unlockedUntil) return;
 
-      // Have we reached the next limit?
+      // ⛔ Prevent instant re‑trigger while gate is already visible
+      if (AD_GATE.style.display === 'flex') return;
+
+      // Time limit reached?
       if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
-        showAdGate();
-        limitIndex++;
+        showAdGate();               // do NOT increment limitIndex yet
       }
     }, 1000);
 
@@ -408,7 +410,7 @@
     // --------------------------------------------------------------
     function showAdGate() {
       // Close fullscreen viewer if it is open – otherwise its close button
-      // would be blocked by the overlay.
+      // would stay blocked by the overlay.
       if (VIEWER && VIEWER.classList.contains('active')) {
         VIEWER.classList.remove('active');
         PDF_FRAME.src = '';
@@ -431,7 +433,7 @@
     }
 
     function enableContent() {
-      // Restore normal scrolling & interaction.
+      // Fully restore scrolling & interaction.
       document.documentElement.style.overflow = '';
       document.body.style.pointerEvents = 'auto';
     }
@@ -453,10 +455,13 @@
     window.onAdCompleted = function (target) {
       hideAdGate();
 
-      // Force a repaint inside the WebView (prevents rendering lag)
+      // 🔥 Force WebView repaint (prevents rendering lag)
       requestAnimationFrame(() => {
         document.body.offsetHeight;
       });
+
+      // ⏭️ Move to next limit ONLY after success
+      limitIndex++;
 
       // Unlock the content for 5 minutes
       unlockedUntil = Date.now() + (5 * 60 * 1000);
