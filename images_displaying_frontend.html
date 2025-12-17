@@ -26,9 +26,9 @@
       width: 100%;
       padding: 16px;
       text-align: center;
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, .08);
       backdrop-filter: blur(12px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,.3);
       font-size: 1.5em;
       font-weight: 600;
       color: #60a5fa;
@@ -37,7 +37,7 @@
 
     #feed {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
       gap: 16px;
       width: 92%;
       max-width: 1300px;
@@ -45,17 +45,16 @@
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255,255,255,.08);
       border-radius: 16px;
       padding: 14px;
       display: flex;
       flex-direction: column;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      transition: transform .25s ease, box-shadow .25s ease;
     }
-
     .card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 20px rgba(0,0,0,.4);
     }
 
     .preview {
@@ -68,175 +67,143 @@
       align-items: center;
       justify-content: center;
     }
+    .preview img { width:100%; height:100%; object-fit:cover; }
 
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .info { margin-top: 10px; }
+    .info { margin-top:10px; }
 
     .title {
-      font-size: 1em;
-      font-weight: 600;
-      color: #f8fafc;
-      margin-bottom: 4px;
-      line-height: 1.4;
-      word-break: break-word;
+      font-size:1em;
+      font-weight:600;
+      color:#f8fafc;
+      margin-bottom:4px;
+      line-height:1.4;
+      word-break:break-word;
     }
 
     .meta {
-      font-size: 0.85em;
-      color: #94a3b8;
-      word-break: break-word;
+      font-size:.85em;
+      color:#94a3b8;
+      word-break:break-word;
     }
 
     .open-btn {
-      margin-top: 10px;
-      background: #60a5fa;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.25s ease;
-      font-size: 0.95em;
+      margin-top:10px;
+      background:#60a5fa;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:10px;
+      font-weight:500;
+      cursor:pointer;
+      transition:background .25s;
+      font-size:.95em;
     }
-
-    .open-btn:hover { background: #3b82f6; }
+    .open-btn:hover { background:#3b82f6; }
 
     footer {
-      margin-top: 30px;
-      color: #94a3b8;
-      font-size: 0.9em;
-      text-align: center;
+      margin-top:30px;
+      color:#94a3b8;
+      font-size:.9em;
+      text-align:center;
     }
 
     .loader {
-      margin-top: 60px;
-      border: 6px solid rgba(255, 255, 255, 0.2);
-      border-top: 6px solid #60a5fa;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      animation: spin 1s linear infinite;
+      margin-top:60px;
+      border:6px solid rgba(255,255,255,.2);
+      border-top:6px solid #60a5fa;
+      border-radius:50%;
+      width:45px; height:45px;
+      animation:spin 1s linear infinite;
     }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 0% {transform:rotate(0)} 100% {transform:rotate(360deg)} }
 
     .pdf-viewer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #0f172a;
-      z-index: 999;
-      display: none;
-      flex-direction: column;
+      position:fixed; top:0; left:0;
+      width:100vw; height:100vh;
+      background:#0f172a;
+      z-index:999;
+      display:none;
+      flex-direction:column;
     }
-
-    .pdf-viewer.active { display: flex; }
+    .pdf-viewer.active { display:flex; }
 
     .pdf-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 14px;
-      background: rgba(15, 23, 42, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 14px;
+      background:rgba(15,23,42,.9);
+      border-bottom:1px solid rgba(255,255,255,.1);
     }
-
     .pdf-toolbar h2 {
-      font-size: 1em;
-      color: #93c5fd;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 80%;
+      font-size:1em;
+      color:#93c5fd;
+      font-weight:500;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:80%;
     }
-
     .close-full {
-      background: #ef4444;
-      border: none;
-      color: white;
-      font-size: 1.2em;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background 0.25s ease;
+      background:#ef4444;
+      border:none;
+      color:#fff;
+      font-size:1.2em;
+      width:36px; height:36px;
+      border-radius:50%;
+      cursor:pointer;
+      transition:background .25s;
     }
+    .close-full:hover { background:#dc2626; }
+    .pdf-iframe { flex-grow:1; border:none; width:100%; height:100%; }
 
-    .close-full:hover { background: #dc2626; }
-
-    .pdf-iframe {
-      flex-grow: 1;
-      border: none;
-      width: 100%;
-      height: 100%;
-    }
-
-    /* -----------------------------------------------------------------
-       Rewarded‑Ad modal
-       ----------------------------------------------------------------- */
+    /* Rewarded‑Ad modal */
     .ad-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
+      position:fixed; top:0; left:0;
+      width:100vw; height:100vh;
+      background:rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:1000;
     }
-
     .ad-content {
-      background: #1e293b;
-      padding: 24px;
-      border-radius: 12px;
-      max-width: 340px;
-      text-align: center;
+      background:#1e293b;
+      padding:24px;
+      border-radius:12px;
+      max-width:340px;
+      text-align:center;
     }
-
     .ad-content h2 {
-      color: #f8fafc;
-      margin-bottom: 12px;
-      font-size: 1.2em;
+      color:#f8fafc;
+      margin-bottom:12px;
+      font-size:1.2em;
     }
-
     .ad-content p {
-      color: #94a3b8;
-      margin-bottom: 20px;
+      color:#94a3b8;
+      margin-bottom:20px;
     }
-
     .watch-ad-btn {
-      background: #60a5fa;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-      transition: background 0.25s ease;
+      background:#60a5fa;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      padding:10px 20px;
+      font-size:1em;
+      cursor:pointer;
+      transition:background .25s;
     }
-
-    .watch-ad-btn:hover {
-      background: #3b82f6;
+    .watch-ad-btn:hover { background:#3b82f6; }
+    .watch-ad-btn:disabled {
+      background:#475569;
+      cursor:not-allowed;
     }
   </style>
 </head>
 
 <body>
   <header>📚 Image Stream</header>
+
   <div id="feed"></div>
   <div id="loader" class="loader"></div>
 
@@ -245,11 +212,11 @@
     <div class="ad-content">
       <h2>Watch a rewarded ad to continue</h2>
       <p>Watch a short ad to unlock more images.</p>
-      <button id="watchAdBtn" class="watch-ad-btn">Watch Ad</button>
+      <button id="watchAdBtn" class="watch-ad-btn" type="button" disabled>Watch Ad</button>
     </div>
   </div>
 
-  <footer>Powered by Archive & Your Backend</footer>
+  <footer>Powered by Archive &amp; Your Backend</footer>
 
   <!-- Fullscreen Image Viewer -->
   <div id="pdfViewer" class="pdf-viewer">
@@ -261,32 +228,34 @@
   </div>
 
   <script>
-    // -----------------------------------------------------------------
-    // Elements
-    // -----------------------------------------------------------------
-    const FEED = document.getElementById('feed');
-    const LOADER = document.getElementById('loader');
-    const VIEWER = document.getElementById('pdfViewer');
-    const PDF_FRAME = document.getElementById('pdfFrame');
-    const PDF_TITLE = document.getElementById('pdfTitle');
-    const CLOSE_VIEWER = document.getElementById('closeViewer');
+    /* --------------------------------------------------------------
+       Element references
+       -------------------------------------------------------------- */
+    const FEED          = document.getElementById('feed');
+    const LOADER        = document.getElementById('loader');
+    const VIEWER        = document.getElementById('pdfViewer');
+    const PDF_FRAME     = document.getElementById('pdfFrame');
+    const PDF_TITLE     = document.getElementById('pdfTitle');
+    const CLOSE_VIEWER  = document.getElementById('closeViewer');
+    const AD_MODAL      = document.getElementById('adModal');
+    const WATCH_BTN     = document.getElementById('watchAdBtn');
 
     const BACKEND_URL = 'https://images_displaying_backend.erenyeager6880.workers.dev';
 
-    // -----------------------------------------------------------------
-    // Data handling
-    // -----------------------------------------------------------------
-    let allData = [];               // All items fetched from backend
-    let currentIndex = 0;           // Index of the next item to render
-    const BATCH_SIZE = 30;          // Number of cards per render batch
-    let loading = false;            // Prevent parallel renders
+    /* --------------------------------------------------------------
+       Data handling
+       -------------------------------------------------------------- */
+    let allData = [];               // all items from the backend
+    let currentIndex = 0;          // next item to render
+    const BATCH_SIZE = 30;
+    let loading = false;           // prevent parallel renders
 
-    // -----------------------------------------------------------------
-    // Rewarded‑ad gating variables
-    // -----------------------------------------------------------------
-    let elapsedSeconds = 0;                // Global timer
-    let thresholdIndex = 0;                // Which checkpoint we are waiting for
-    let thresholds = [
+    /* --------------------------------------------------------------
+       Rewarded‑ad gating variables
+       -------------------------------------------------------------- */
+    let elapsedSeconds = 0;          // global timer (seconds)
+    let thresholdIndex = 0;          // which checkpoint we are waiting for
+    const thresholds = [
       20,               // 20 seconds
       5 * 60,           // 5 minutes
       10 * 60,          // 10 minutes
@@ -294,71 +263,67 @@
       30 * 60,
       40 * 60,
       50 * 60
-    ];                  // In seconds
-    let scrollEnabled = true;             // Controls the infinite scroll
+    ]; // in seconds
+    let scrollEnabled = true;       // stops infinite‑scroll while a checkpoint is active
 
-    // -----------------------------------------------------------------
-    // Native‑bridge helpers
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Native‑bridge helpers
+       -------------------------------------------------------------- */
     function initAdBridge() {
       if (window.Android && typeof Android.preloadRewardedAd === 'function') {
+        console.log('🔌 Android bridge present – pre‑loading rewarded ad');
         Android.preloadRewardedAd();
       } else {
-        console.warn('Android bridge not available – reward‑ad functions disabled.');
+        console.warn('⚠️ Android bridge not available – rewarded ads disabled');
       }
     }
 
     function showAdModal() {
-      const modal = document.getElementById('adModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Prevent background scroll
-      }
+      AD_MODAL.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
     }
 
     function hideAdModal() {
-      const modal = document.getElementById('adModal');
-      if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-      }
+      AD_MODAL.style.display = 'none';
+      document.body.style.overflow = 'auto';
     }
 
-    // -----------------------------------------------------------------
-    // Callbacks invoked from the Android side (via evaluateJavascript)
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Callbacks that Android invokes (via evaluateJavascript)
+       -------------------------------------------------------------- */
     function onAdPreloaded() {
-      console.log('✅ Rewarded ad preloaded');
+      console.log('✅ Rewarded ad is ready');
+      WATCH_BTN.disabled = false;               // user can now press “Watch Ad”
     }
 
     function onAdFailedToPreload() {
       console.warn('⚠️ Rewarded ad failed to load');
+      WATCH_BTN.disabled = true;
     }
 
     function onAdNotAvailable() {
-      alert('Rewarded ad not available. Please try again later.');
-      // Let the user continue – otherwise they would be stuck forever
+      alert('Rewarded ad not available – you can continue without watching.');
       hideAdModal();
       scrollEnabled = true;
-      thresholdIndex++;                     // Skip this checkpoint
+      thresholdIndex++;                         // skip this checkpoint
     }
 
     function onAdCompleted(targetUrl) {
-      console.log('✅ Rewarded ad completed');
+      console.log('✅ Rewarded ad completed – unlocking content');
       hideAdModal();
       scrollEnabled = true;
-      thresholdIndex++;                     // Move to the next checkpoint
+      thresholdIndex++;
 
-      // If we have exhausted the static list, keep adding 10‑minute steps
+      // keep extending the schedule once the static list is exhausted
       if (thresholdIndex >= thresholds.length) {
         const last = thresholds[thresholds.length - 1];
         thresholds.push(last + 10 * 60);
       }
     }
 
-    // -----------------------------------------------------------------
-    // Data fetch
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Data fetch
+       -------------------------------------------------------------- */
     async function fetchData() {
       try {
         const res = await fetch(BACKEND_URL);
@@ -366,50 +331,46 @@
         LOADER.style.display = 'none';
 
         if (!data || data.length === 0) {
-          FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No Images found 😢</p>";
+          FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No images found 😢</p>";
           return;
         }
 
         allData = data;
-        renderNextBatch();                 // First batch
-      } catch (err) {
+        renderNextBatch();                     // first 30 cards
+      } catch (e) {
         LOADER.style.display = 'none';
-        FEED.innerHTML = `<p style='text-align:center;color:#f87171'>Error loading data 😞</p>`;
-        console.error(err);
+        FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
+        console.error(e);
       }
     }
 
-    // -----------------------------------------------------------------
-    // Rendering a batch of cards
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Render a batch of cards
+       -------------------------------------------------------------- */
     function renderNextBatch() {
       if (loading) return;
       loading = true;
 
-      const nextBatch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
-
-      nextBatch.forEach(item => {
+      const slice = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
+      slice.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
 
+        // ---- thumbnail ----
         const preview = document.createElement('div');
         preview.className = 'preview';
-
-        // Thumbnail from archive.org (if possible)
         let thumbUrl = '';
         if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
-          const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
-          if (identifier) {
-            thumbUrl = `https://archive.org/services/img/${identifier}`;
-          }
+          const id = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
+          if (id) thumbUrl = `https://archive.org/services/img/${id}`;
         }
-
         if (thumbUrl) {
           preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
         } else {
-          preview.textContent = 'No Preview Available';
+          preview.textContent = 'No preview available';
         }
 
+        // ---- info ----
         const info = document.createElement('div');
         info.className = 'info';
         info.innerHTML = `
@@ -417,6 +378,7 @@
           <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
         `;
 
+        // ---- open‑image button ----
         const openBtn = document.createElement('button');
         openBtn.className = 'open-btn';
         openBtn.textContent = 'Open Image';
@@ -426,25 +388,23 @@
         FEED.appendChild(card);
       });
 
-      currentIndex += nextBatch.length;
+      currentIndex += slice.length;
       loading = false;
     }
 
-    // -----------------------------------------------------------------
-    // Infinite scroll – respects the scrollEnabled flag
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Infinite scroll (obeys scrollEnabled)
+       -------------------------------------------------------------- */
     window.addEventListener('scroll', () => {
       if (!scrollEnabled) return;
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        if (currentIndex < allData.length && !loading) {
-          renderNextBatch();
-        }
+        if (!loading && currentIndex < allData.length) renderNextBatch();
       }
     });
 
-    // -----------------------------------------------------------------
-    // Full‑screen image viewer (unchanged)
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Fullscreen viewer (unchanged)
+       -------------------------------------------------------------- */
     function openFullscreenImage(title, url) {
       if (!url) return;
       const embedUrl = url.includes('archive.org')
@@ -454,60 +414,57 @@
       PDF_FRAME.src = embedUrl;
       VIEWER.classList.add('active');
     }
-
     CLOSE_VIEWER.onclick = () => {
       VIEWER.classList.remove('active');
       PDF_FRAME.src = '';
     };
 
-    // -----------------------------------------------------------------
-    // Timer that triggers the ad‑gate
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Timer – shows ad‑gate at the defined checkpoints
+       -------------------------------------------------------------- */
     setInterval(() => {
       elapsedSeconds++;
 
       if (thresholdIndex < thresholds.length && elapsedSeconds >= thresholds[thresholdIndex]) {
-        // Show the ad‑prompt only once per checkpoint
         if (scrollEnabled) {
+          console.log(`⏰ Checkpoint reached (${elapsedSeconds}s) – pausing feed`);
           scrollEnabled = false;
           showAdModal();
         }
       }
     }, 1000);
 
-    // -----------------------------------------------------------------
-    // UI interactions for the modal
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       UI wiring for the modal
+       -------------------------------------------------------------- */
     document.addEventListener('DOMContentLoaded', () => {
-      // 1️⃣ Pre‑load the rewarded ad once the page is ready
-      initAdBridge();
+      initAdBridge();            // start preloading the rewarded ad
 
-      // 2️⃣ Hook the "Watch Ad" button
-      const watchBtn = document.getElementById('watchAdBtn');
-      if (watchBtn) {
-        watchBtn.addEventListener('click', () => {
-          if (window.Android && typeof Android.requestRewardedAd === 'function') {
-            Android.requestRewardedAd();   // Native side will display the ad
-          } else {
-            console.warn('Android interface not available – closing modal.');
-            hideAdModal();
-            scrollEnabled = true;
-          }
-        });
-      }
+      WATCH_BTN.addEventListener('click', () => {
+        if (window.Android && typeof Android.requestRewardedAd === 'function') {
+          console.log('🖱️ “Watch Ad” clicked – invoking native ad');
+          // Disable the button while the ad is showing to avoid double‑taps
+          WATCH_BTN.disabled = true;
+          Android.requestRewardedAd();   // native side will display the ad
+        } else {
+          console.warn('⚠️ Android bridge missing – cannot show ad');
+          hideAdModal();
+          scrollEnabled = true;
+        }
+      });
 
-      // 3️⃣ Allow ESC to close the modal (in case of errors)
+      // Allow ESC to dismiss the modal (useful while testing)
       document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && document.getElementById('adModal').style.display === 'flex') {
+        if (e.key === 'Escape' && AD_MODAL.style.display === 'flex') {
           hideAdModal();
           scrollEnabled = true;
         }
       });
     });
 
-    // -----------------------------------------------------------------
-    // Kick off everything
-    // -----------------------------------------------------------------
+    /* --------------------------------------------------------------
+       Kick‑off
+       -------------------------------------------------------------- */
     fetchData();
   </script>
 </body>
