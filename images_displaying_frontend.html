@@ -363,41 +363,6 @@
   </script>
   <!-- ==================== END MAIN APP SCRIPT ==================== -->
 
-  <!-- ===========================================================
-       Intercept navigation to javascript: URLs (e.g. javascript:onAdCompleted())
-       ----------------------------------------------------------- -->
-  <script>
-    (function () {
-      const originalAssign = window.location.assign;
-      const originalReplace = window.location.replace;
-
-      function executeJavascriptUrl(url) {
-        if (typeof url === 'string' && url.startsWith('javascript:')) {
-          try {
-            eval(url.replace('javascript:', ''));
-            return true;
-          } catch (e) {
-            console.error('JS eval failed:', e);
-          }
-        }
-        return false;
-      }
-
-      window.location.assign = function (url) {
-        if (!executeJavascriptUrl(url)) {
-          originalAssign.call(window.location, url);
-        }
-      };
-
-      window.location.replace = function (url) {
-        if (!executeJavascriptUrl(url)) {
-          originalReplace.call(window.location, url);
-        }
-      };
-    })();
-  </script>
-  <!-- =========================================================== -->
-
   <!-- ====================== AD GATE TIMER SCRIPT ====================== -->
   <script>
     // --------------------------------------------------------------
@@ -413,10 +378,11 @@
       50 * 60      // 50 min
     ];
 
-    // Restore elapsed time from sessionStorage (temporary)
-    let elapsed = Number(sessionStorage.getItem('elapsed')) || 0;
-    let limitIndex = 0;               // next limit to check
-    let unlockedUntil = 0;            // timestamp (ms) until user is free
+    // Restore persisted values from sessionStorage
+    let elapsed     = Number(sessionStorage.getItem('elapsed'))      || 0;
+    let limitIndex  = Number(sessionStorage.getItem('limitIndex'))   || 0;
+    let unlockedUntil = Number(sessionStorage.getItem('unlockedUntil')) || 0;
+    let adInProgress = false;          // guard against double‑clicks
 
     const AD_GATE = document.getElementById('adGate');
     const WATCH_BTN = document.getElementById('watchAdBtn');
@@ -425,23 +391,24 @@
     // Main timer – runs each second.
     // --------------------------------------------------------------
     setInterval(() => {
+      // 🔒 If we are in an unlocked period, do nothing.
+      if (Date.now() < unlockedUntil) return;
+
+      // Increment elapsed only when not unlocked.
       elapsed++;
       sessionStorage.setItem('elapsed', elapsed);
 
-      // 🔒 If unlocked, do NOTHING
-      if (Date.now() < unlockedUntil) return;
-
-      // ⛔ Prevent instant re‑trigger while gate is already visible
+      // ⛔ Prevent instant re‑trigger while gate already visible.
       if (AD_GATE.style.display === 'flex') return;
 
-      // Time limit reached?
+      // Show gate when the next limit is reached.
       if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
-        showAdGate();               // don't increment yet
+        showAdGate();               // DO NOT increment limitIndex yet.
       }
     }, 1000);
 
     // --------------------------------------------------------------
-    // Show / hide helpers
+    // Show / hide helpers (updated per specification)
     // --------------------------------------------------------------
     function showAdGate() {
       // Close fullscreen viewer if it is open – otherwise its close button
@@ -452,35 +419,27 @@
       }
 
       AD_GATE.style.display = 'flex';
-      disableContent();
+      AD_GATE.style.pointerEvents = 'auto';
+      document.documentElement.style.overflow = 'hidden';
     }
 
     function hideAdGate() {
       AD_GATE.style.display = 'none';
       AD_GATE.style.pointerEvents = 'none';
-      enableContent();
-    }
-
-    function disableContent() {
-      // Prevent scrolling while the gate is visible.
-      document.documentElement.style.overflow = 'hidden';
-      AD_GATE.style.pointerEvents = 'auto';
-    }
-
-    function enableContent() {
-      // Fully restore scrolling & interaction.
       document.documentElement.style.overflow = '';
-      document.body.style.pointerEvents = 'auto';
     }
 
     // --------------------------------------------------------------
     // User clicks “Watch Ad”
     // --------------------------------------------------------------
     WATCH_BTN.onclick = () => {
+      if (adInProgress) return;                 // prevent duplicate requests
+      adInProgress = true;
       if (window.Android && typeof Android.requestRewardedAd === 'function') {
         Android.requestRewardedAd('continue');
       } else {
         alert('Ads not available');
+        adInProgress = false;                  // reset flag if call fails
       }
     };
 
@@ -488,6 +447,9 @@
     // Called from native Android when the rewarded video finishes.
     // --------------------------------------------------------------
     window.onAdCompleted = function (target) {
+      if (!adInProgress) return;                // safety guard
+      adInProgress = false;
+
       hideAdGate();
 
       // 🔥 Force WebView repaint (prevents rendering lag)
@@ -497,9 +459,15 @@
 
       // ⏭️ Move to next limit ONLY after success
       limitIndex++;
+      sessionStorage.setItem('limitIndex', limitIndex);
 
-      // Unlock the content for 5 minutes
+      // 🔥 RESET elapsed to the start of the just‑completed limit
+      elapsed = LIMITS[limitIndex - 1] || elapsed;
+      sessionStorage.setItem('elapsed', elapsed);
+
+      // 🔓 Unlock for 5 minutes and persist it
       unlockedUntil = Date.now() + (5 * 60 * 1000);
+      sessionStorage.setItem('unlockedUntil', unlockedUntil);
     };
 
     // --------------------------------------------------------------
@@ -507,14 +475,8 @@
     // --------------------------------------------------------------
     window.onAdNotAvailable = function () {
       alert('Ad not available. Try again later.');
+      adInProgress = false;    // reset guard
     };
-
-    // --------------------------------------------------------------
-    // Clean up temporary storage when the page is left.
-    // --------------------------------------------------------------
-    const clearTimerStorage = () => sessionStorage.removeItem('elapsed');
-    window.addEventListener('pagehide', clearTimerStorage);
-    window.addEventListener('beforeunload', clearTimerStorage);
   </script>
   <!-- ==================== END AD GATE TIMER SCRIPT ==================== -->
 
