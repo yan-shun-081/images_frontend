@@ -27,9 +27,9 @@
       width: 100%;
       padding: 16px;
       text-align: center;
-      background: rgba(255,255,255,.08);
+      background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(12px);
-      box-shadow: 0 4px 20px rgba(0,0,0,.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
       font-size: 1.5em;
       font-weight: 600;
       color: #60a5fa;
@@ -38,7 +38,7 @@
 
     #feed {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
       width: 92%;
       max-width: 1300px;
@@ -46,16 +46,17 @@
     }
 
     .card {
-      background: rgba(255,255,255,.08);
+      background: rgba(255, 255, 255, 0.08);
       border-radius: 16px;
       padding: 14px;
       display: flex;
       flex-direction: column;
-      transition: transform .25s ease, box-shadow .25s ease;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
+
     .card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,.4);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
 
     .preview {
@@ -68,156 +69,168 @@
       align-items: center;
       justify-content: center;
     }
-    .preview img { width:100%; height:100%; object-fit:cover; }
 
-    .info { margin-top:10px; }
+    .preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .info { margin-top: 10px; }
 
     .title {
-      font-size:1em;
-      font-weight:600;
-      color:#f8fafc;
-      margin-bottom:4px;
-      line-height:1.4;
-      word-break:break-word;
+      font-size: 1em;
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 4px;
+      line-height: 1.4;
+      word-break: break-word;
     }
 
     .meta {
-      font-size:.85em;
-      color:#94a3b8;
-      word-break:break-word;
+      font-size: 0.85em;
+      color: #94a3b8;
+      word-break: break-word;
     }
 
     .open-btn {
-      margin-top:10px;
-      background:#60a5fa;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      padding:10px;
-      font-weight:500;
-      cursor:pointer;
-      transition:background .25s;
-      font-size:.95em;
+      margin-top: 10px;
+      background: #60a5fa;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      font-size: 0.95em;
     }
-    .open-btn:hover { background:#3b82f6; }
+
+    .open-btn:hover { background: #3b82f6; }
 
     footer {
-      margin-top:30px;
-      color:#94a3b8;
-      font-size:.9em;
-      text-align:center;
+      margin-top: 30px;
+      color: #94a3b8;
+      font-size: 0.9em;
+      text-align: center;
     }
 
     .loader {
-      margin-top:60px;
-      border:6px solid rgba(255,255,255,.2);
-      border-top:6px solid #60a5fa;
-      border-radius:50%;
-      width:45px; height:45px;
-      animation:spin 1s linear infinite;
+      margin-top: 60px;
+      border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top: 6px solid #60a5fa;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      animation: spin 1s linear infinite;
     }
-    @keyframes spin { 0% {transform:rotate(0)} 100% {transform:rotate(360deg)} }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
 
     .pdf-viewer {
-      position:fixed; top:0; left:0;
-      width:100vw; height:100vh;
-      background:#0f172a;
-      z-index:999;
-      display:none;
-      flex-direction:column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #0f172a;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
     }
-    .pdf-viewer.active { display:flex; }
+
+    .pdf-viewer.active { display: flex; }
 
     .pdf-toolbar {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:10px 14px;
-      background:rgba(15,23,42,.9);
-      border-bottom:1px solid rgba(255,255,255,.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
-    .pdf-toolbar h2 {
-      font-size:1em;
-      color:#93c5fd;
-      font-weight:500;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      max-width:80%;
-    }
-    .close-full {
-      background:#ef4444;
-      border:none;
-      color:#fff;
-      font-size:1.2em;
-      width:36px; height:36px;
-      border-radius:50%;
-      cursor:pointer;
-      transition:background .25s;
-    }
-    .close-full:hover { background:#dc2626; }
-    .pdf-iframe { flex-grow:1; border:none; width:100%; height:100%; }
 
-    /* Rewarded‑Ad modal */
-    .ad-modal {
-      position:fixed; top:0; left:0;
-      width:100vw; height:100vh;
-      background:rgba(0,0,0,.6);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:1000;
+    .pdf-toolbar h2 {
+      font-size: 1em;
+      color: #93c5fd;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 80%;
     }
-    .ad-content {
-      background:#1e293b;
-      padding:24px;
-      border-radius:12px;
-      max-width:340px;
-      text-align:center;
+
+    .close-full {
+      background: #ef4444;
+      border: none;
+      color: white;
+      font-size: 1.2em;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.25s ease;
     }
-    .ad-content h2 {
-      color:#f8fafc;
-      margin-bottom:12px;
-      font-size:1.2em;
-    }
-    .ad-content p {
-      color:#94a3b8;
-      margin-bottom:20px;
-    }
-    .watch-ad-btn {
-      background:#60a5fa;
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      padding:10px 20px;
-      font-size:1em;
-      cursor:pointer;
-      transition:background .25s;
-    }
-    .watch-ad-btn:hover { background:#3b82f6; }
-    .watch-ad-btn:disabled {
-      background:#475569;
-      cursor:not-allowed;
+
+    .close-full:hover { background: #dc2626; }
+
+    .pdf-iframe {
+      flex-grow: 1;
+      border: none;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- ====================== AD GATE POPUP ====================== -->
+  <div id="adGate" style="
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  ">
+    <div style="
+      background:#0f172a;
+      padding:20px;
+      border-radius:12px;
+      text-align:center;
+      width:90%;
+      max-width:320px;
+    ">
+      <h3 style="color:#93c5fd;margin-bottom:10px">⏳ Time Limit Reached</h3>
+      <p style="color:#cbd5f5;font-size:14px">
+        Watch a short ad to continue accessing content
+      </p>
+      <button id="watchAdBtn" style="
+        margin-top:12px;
+        padding:10px 16px;
+        border:none;
+        border-radius:8px;
+        background:#60a5fa;
+        color:white;
+        font-weight:600;
+        cursor:pointer;
+      ">
+        ▶ Watch Ad
+      </button>
+    </div>
+  </div>
+  <!-- ===================== END AD GATE POPUP ==================== -->
+
   <header>📚 Image Stream</header>
 
   <div id="feed"></div>
   <div id="loader" class="loader"></div>
-
-  <!-- Rewarded‑Ad Modal -->
-  <div id="adModal" class="ad-modal">
-    <div class="ad-content">
-      <h2>Watch a rewarded ad to continue</h2>
-      <p>Watch a short ad to unlock more images.</p>
-      <button id="watchAdBtn" class="watch-ad-btn" type="button" disabled>Watch Ad</button>
-    </div>
-  </div>
-
-  <footer>Powered by Archive &amp; Your Backend</footer>
+  <footer>Powered by Archive & Your Backend</footer>
 
   <!-- Fullscreen Image Viewer -->
   <div id="pdfViewer" class="pdf-viewer">
@@ -228,141 +241,22 @@
     <iframe id="pdfFrame" class="pdf-iframe" src=""></iframe>
   </div>
 
-  <!-- --------------------------------------------------------------
-       Bridge‑waiter (safely waits for the Android bridge)
-       -------------------------------------------------------------- -->
+  <!-- ====================== MAIN APP SCRIPT ====================== -->
   <script>
-    /**
-     * Returns a promise that resolves to true when the Android bridge is ready,
-     * or false after `maxWait` milliseconds.
-     */
-    function waitForAndroidBridge(maxWait = 5000) {
-      const start = Date.now();
-
-      return new Promise(resolve => {
-        const timer = setInterval(() => {
-          if (window.Android && typeof Android.preloadRewardedAd === 'function') {
-            clearInterval(timer);
-            console.log('✅ Android bridge ready');
-            resolve(true);
-          }
-          if (Date.now() - start > maxWait) {
-            clearInterval(timer);
-            console.warn('⚠️ Android bridge timeout');
-            resolve(false);
-          }
-        }, 200);
-      });
-    }
-  </script>
-
-  <script>
-    /* --------------------------------------------------------------
-       Element references
-       -------------------------------------------------------------- */
-    const FEED          = document.getElementById('feed');
-    const LOADER        = document.getElementById('loader');
-    const VIEWER        = document.getElementById('pdfViewer');
-    const PDF_FRAME     = document.getElementById('pdfFrame');
-    const PDF_TITLE     = document.getElementById('pdfTitle');
-    const CLOSE_VIEWER  = document.getElementById('closeViewer');
-    const AD_MODAL      = document.getElementById('adModal');
-    const WATCH_BTN     = document.getElementById('watchAdBtn');
+    const FEED = document.getElementById('feed');
+    const LOADER = document.getElementById('loader');
+    const VIEWER = document.getElementById('pdfViewer');
+    const PDF_FRAME = document.getElementById('pdfFrame');
+    const PDF_TITLE = document.getElementById('pdfTitle');
+    const CLOSE_VIEWER = document.getElementById('closeViewer');
 
     const BACKEND_URL = 'https://images_displaying_backend.erenyeager6880.workers.dev';
 
-    /* --------------------------------------------------------------
-       Data handling
-       -------------------------------------------------------------- */
-    let allData = [];               // all items fetched from the backend
-    let currentIndex = 0;          // next item to render
+    let allData = [];               // store all JSONs
+    let currentIndex = 0;
     const BATCH_SIZE = 30;
-    let loading = false;          // guard against parallel renders
+    let loading = false;
 
-    /* --------------------------------------------------------------
-       Rewarded‑ad gating variables
-       -------------------------------------------------------------- */
-    let elapsedSeconds = 0;          // seconds since page load
-    let thresholdIndex = 0;          // which checkpoint we are waiting for
-    const thresholds = [
-      20,               // 20 seconds
-      5 * 60,           // 5 minutes
-      10 * 60,          // 10 minutes
-      20 * 60,
-      30 * 60,
-      40 * 60,
-      50 * 60
-    ]; // seconds
-    let scrollEnabled = true;       // false while a checkpoint modal is shown
-
-    /* --------------------------------------------------------------
-       Safety‑timeout holder (cleared when modal hides)
-       -------------------------------------------------------------- */
-    let adTimeoutId = null;
-
-    /* --------------------------------------------------------------
-       Helper: show / hide the ad modal
-       -------------------------------------------------------------- */
-    function showAdModal() {
-      AD_MODAL.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-
-      // 8‑second safety fallback – never let the feed stay locked.
-      adTimeoutId = setTimeout(() => {
-        if (!scrollEnabled && AD_MODAL.style.display === 'flex') {
-          console.warn('⏱️ Ad timeout fallback triggered');
-          hideAdModal();
-          scrollEnabled = true;
-          WATCH_BTN.disabled = false;
-          thresholdIndex++;
-        }
-      }, 8000);
-    }
-
-    function hideAdModal() {
-      AD_MODAL.style.display = 'none';
-      document.body.style.overflow = 'auto';
-      if (adTimeoutId) { clearTimeout(adTimeoutId); adTimeoutId = null; }
-    }
-
-    /* --------------------------------------------------------------
-       Callbacks that Android invokes via evaluateJavascript()
-       -------------------------------------------------------------- */
-    function onAdPreloaded() {
-      console.log('🎯 Ad preloaded');
-      WATCH_BTN.disabled = false;   // user can now press “Watch Ad”
-    }
-
-    function onAdFailedToPreload() {
-      console.warn('❌ Ad failed to preload');
-      WATCH_BTN.disabled = false;   // let the user continue anyway
-    }
-
-    function onAdNotAvailable() {
-      alert('Ad not available – you can continue without watching.');
-      hideAdModal();
-      scrollEnabled = true;
-      WATCH_BTN.disabled = false;
-      thresholdIndex++;                     // skip this checkpoint
-    }
-
-    function onAdCompleted(targetUrl) {
-      console.log('✅ Ad completed – unlocking content');
-      hideAdModal();
-      scrollEnabled = true;
-      WATCH_BTN.disabled = false;
-      thresholdIndex++;
-
-      // extend schedule after the static list is exhausted
-      if (thresholdIndex >= thresholds.length) {
-        const last = thresholds[thresholds.length - 1];
-        thresholds.push(last + 10 * 60);
-      }
-    }
-
-    /* --------------------------------------------------------------
-       Data fetch
-       -------------------------------------------------------------- */
     async function fetchData() {
       try {
         const res = await fetch(BACKEND_URL);
@@ -370,46 +264,47 @@
         LOADER.style.display = 'none';
 
         if (!data || data.length === 0) {
-          FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No images found 😢</p>";
+          FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No Images found 😢</p>";
           return;
         }
 
-        allData = data;
-        renderNextBatch();   // first batch
-      } catch (e) {
+        allData = data;                // temporary storage
+        renderNextBatch();             // first batch
+      } catch (err) {
         LOADER.style.display = 'none';
-        FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
-        console.error(e);
+        FEED.innerHTML = `<p style='text-align:center;color:#f87171'>Error loading data 😞</p>`;
+        console.error(err);
       }
     }
 
-    /* --------------------------------------------------------------
-       Render a batch of cards
-       -------------------------------------------------------------- */
     function renderNextBatch() {
       if (loading) return;
       loading = true;
 
-      const slice = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
-      slice.forEach(item => {
+      const nextBatch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
+
+      nextBatch.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
 
-        // ----- thumbnail -----
         const preview = document.createElement('div');
         preview.className = 'preview';
+
+        // Extract thumbnail from archive.org URL
         let thumbUrl = '';
         if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
-          const id = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
-          if (id) thumbUrl = `https://archive.org/services/img/${id}`;
+          const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
+          if (identifier) {
+            thumbUrl = `https://archive.org/services/img/${identifier}`;
+          }
         }
+
         if (thumbUrl) {
           preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
         } else {
-          preview.textContent = 'No preview available';
+          preview.textContent = 'No Preview Available';
         }
 
-        // ----- info -----
         const info = document.createElement('div');
         info.className = 'info';
         info.innerHTML = `
@@ -417,7 +312,6 @@
           <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
         `;
 
-        // ----- open‑image button -----
         const openBtn = document.createElement('button');
         openBtn.className = 'open-btn';
         openBtn.textContent = 'Open Image';
@@ -427,23 +321,19 @@
         FEED.appendChild(card);
       });
 
-      currentIndex += slice.length;
+      currentIndex += nextBatch.length;
       loading = false;
     }
 
-    /* --------------------------------------------------------------
-       Infinite scroll (obeys scrollEnabled)
-       -------------------------------------------------------------- */
+    // Infinite scroll
     window.addEventListener('scroll', () => {
-      if (!scrollEnabled) return;
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        if (!loading && currentIndex < allData.length) renderNextBatch();
+        if (currentIndex < allData.length && !loading) {
+          renderNextBatch();
+        }
       }
     });
 
-    /* --------------------------------------------------------------
-       Fullscreen viewer (unchanged)
-       -------------------------------------------------------------- */
     function openFullscreenImage(title, url) {
       if (!url) return;
       const embedUrl = url.includes('archive.org')
@@ -453,66 +343,130 @@
       PDF_FRAME.src = embedUrl;
       VIEWER.classList.add('active');
     }
+
     CLOSE_VIEWER.onclick = () => {
       VIEWER.classList.remove('active');
       PDF_FRAME.src = '';
     };
 
-    /* --------------------------------------------------------------
-       Timer – shows ad‑gate at each checkpoint
-       -------------------------------------------------------------- */
-    setInterval(() => {
-      elapsedSeconds++;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        VIEWER.classList.remove('active');
+        PDF_FRAME.src = '';
+      }
+    });
 
-      if (thresholdIndex < thresholds.length && elapsedSeconds >= thresholds[thresholdIndex]) {
-        if (scrollEnabled) {
-          console.log(`⏰ Checkpoint ${thresholdIndex + 1} reached (${elapsedSeconds}s) – pausing feed`);
-          scrollEnabled = false;
-          showAdModal();
-        }
+    fetchData();
+
+    // --------------------------------------------------------------
+    // Pre‑load a rewarded ad (once per page load)
+    // --------------------------------------------------------------
+    if (window.Android && typeof Android.preloadRewardedAd === 'function') {
+      Android.preloadRewardedAd();
+    }
+  </script>
+  <!-- ==================== END MAIN APP SCRIPT ==================== -->
+
+  <!-- ====================== AD GATE TIMER SCRIPT ====================== -->
+  <script>
+    // --------------------------------------------------------------
+    // Time limits (seconds) after which the ad‑gate appears.
+    // --------------------------------------------------------------
+    const LIMITS = [
+      20,          // 20 sec
+      5 * 60,      // 5 min
+      10 * 60,     // 10 min
+      20 * 60,     // 20 min
+      30 * 60,     // 30 min
+      40 * 60,     // 40 min
+      50 * 60      // 50 min
+    ];
+
+    // Restore elapsed time (if any) from localStorage
+    let elapsed = Number(localStorage.getItem('elapsed')) || 0;
+    let limitIndex = 0;          // which limit we are waiting for
+    let unlockedUntil = 0;       // timestamp (ms) until which the user is free
+
+    const AD_GATE = document.getElementById('adGate');
+    const WATCH_BTN = document.getElementById('watchAdBtn');
+
+    // --------------------------------------------------------------
+    // Main timer – runs every second.
+    // --------------------------------------------------------------
+    setInterval(() => {
+      elapsed++;
+      localStorage.setItem('elapsed', elapsed);   // persist
+
+      // If user has a temporary unlock, skip gating
+      if (Date.now() < unlockedUntil) return;
+
+      // Have we reached the next limit?
+      if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
+        showAdGate();
+        limitIndex++;
       }
     }, 1000);
 
-    /* --------------------------------------------------------------
-       UI wiring for the modal and bridge
-       -------------------------------------------------------------- */
-    document.addEventListener('DOMContentLoaded', () => {
-      // ---- 1️⃣ Wait for the Android bridge, then preload the ad ----
-      waitForAndroidBridge().then(ok => {
-        if (ok) {
-          Android.preloadRewardedAd();
-        } else {
-          // Bridge never arrived – let the user continue
-          WATCH_BTN.disabled = false;
-        }
-      });
+    // --------------------------------------------------------------
+    // Show / hide helpers
+    // --------------------------------------------------------------
+    function showAdGate() {
+      // Close the fullscreen viewer (if it's open) so the pointer‑events block
+      // does not also lock the viewer’s close button.
+      if (VIEWER && VIEWER.classList.contains('active')) {
+        VIEWER.classList.remove('active');
+        PDF_FRAME.src = '';
+      }
 
-      // ---- 2️⃣ Safe click handler for “Watch Ad” ----
-      WATCH_BTN.addEventListener('click', () => {
-        if (window.Android?.requestRewardedAd) {
-          WATCH_BTN.disabled = true;       // avoid double taps while ad shows
-          Android.requestRewardedAd();      // native side will display the ad (or call onAdNotAvailable)
-        } else {
-          console.warn('⚠️ Android bridge missing at click time');
-          hideAdModal();
-          scrollEnabled = true;
-          thresholdIndex++;
-        }
-      });
+      AD_GATE.style.display = 'flex';
+      disableContent();
+    }
 
-      // ---- 3️⃣ ESC key to close modal (helpful while testing) ----
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && AD_MODAL.style.display === 'flex') {
-          hideAdModal();
-          scrollEnabled = true;
-        }
-      });
-    });
+    function hideAdGate() {
+      AD_GATE.style.display = 'none';
+      enableContent();
+    }
 
-    /* --------------------------------------------------------------
-       Kick‑off
-       -------------------------------------------------------------- */
-    fetchData();
+    function disableContent() {
+      // Prevent interaction with the page while the gate is visible.
+      document.body.style.pointerEvents = 'none';
+      AD_GATE.style.pointerEvents = 'auto';
+    }
+
+    function enableContent() {
+      document.body.style.pointerEvents = 'auto';
+    }
+
+    // --------------------------------------------------------------
+    // User clicks “Watch Ad”
+    // --------------------------------------------------------------
+    WATCH_BTN.onclick = () => {
+      if (window.Android && Android.requestRewardedAd) {
+        // Android interface supplied by your native wrapper.
+        Android.requestRewardedAd('continue');
+      } else {
+        alert('Ads not available');
+      }
+    };
+
+    // --------------------------------------------------------------
+    // Called from native Android code when the reward video finishes.
+    // --------------------------------------------------------------
+    window.onAdCompleted = function (target) {   // ← receives the string sent by native
+      hideAdGate();
+
+      // Unlock the content for 5 minutes (300 000 ms)
+      unlockedUntil = Date.now() + (5 * 60 * 1000);
+    };
+
+    // --------------------------------------------------------------
+    // Optional: native code tells us an ad could not be shown.
+    // --------------------------------------------------------------
+    window.onAdNotAvailable = function () {
+      alert('Ad not available. Try again later.');
+    };
   </script>
+  <!-- ==================== END AD GATE TIMER SCRIPT ==================== -->
+
 </body>
 </html>
