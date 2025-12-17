@@ -110,7 +110,7 @@
     }
 
     .success { color: #4ade80; }
-    .error { color: #f87171; }
+    .error   { color: #f87171; }
 
     .upload-btn {
       width: 100%;
@@ -134,7 +134,7 @@
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .results {
@@ -210,7 +210,6 @@
       justify-content: center;
       align-items: center;
     }
-
   </style>
 </head>
 <body>
@@ -258,28 +257,36 @@
   </div>
 
   <script>
+    /* ==============================================================
+       Configuration / element cache
+       ============================================================== */
     const API_BASE = "https://images_metadata_backend.erenyeager6880.workers.dev";
 
-    const home = document.getElementById("home");
-    const uploadPage = document.getElementById("uploadPage");
-    const viewerPage = document.getElementById("viewerPage");
-    const goUpload = document.getElementById("goUpload");
-    const goBack = document.getElementById("goBack");
-    const form = document.getElementById("uploadForm");
-    const message = document.getElementById("message");
-    const searchBtn = document.getElementById("searchBtn");
+    const home        = document.getElementById("home");
+    const uploadPage  = document.getElementById("uploadPage");
+    const viewerPage  = document.getElementById("viewerPage");
+    const goUpload    = document.getElementById("goUpload");
+    const goBack      = document.getElementById("goBack");
+    const backToSearch= document.getElementById("backToSearch");
+
+    const form        = document.getElementById("uploadForm");
+    const message     = document.getElementById("message");
+
+    const searchBtn   = document.getElementById("searchBtn");
     const searchInput = document.getElementById("searchInput");
     const searchResults = document.getElementById("searchResults");
+
     const viewerTitle = document.getElementById("viewerTitle");
     const viewerFrame = document.getElementById("viewerFrame");
-    const backToSearch = document.getElementById("backToSearch");
 
-    // ⭐ IMAGE PREVIEW ELEMENTS
+    // preview elements
     const previewContainer = document.getElementById("previewContainer");
-    const previewImage = document.getElementById("previewImage");
-    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const previewImage     = document.getElementById("previewImage");
+    const fullscreenBtn   = document.getElementById("fullscreenBtn");
 
-    // Page Switch
+    /* ==============================================================
+       Page navigation helpers
+       ============================================================== */
     goUpload.onclick = () => {
       home.classList.add("hidden");
       uploadPage.classList.remove("hidden");
@@ -295,7 +302,9 @@
       previewContainer.style.display = "none";
     };
 
-    // ========== UPLOAD HANDLER (unchanged) ==========
+    /* ==============================================================
+       Upload handling (same as before)
+       ============================================================== */
     form.onsubmit = async (e) => {
       e.preventDefault();
       message.textContent = "Uploading...";
@@ -309,7 +318,7 @@
         return;
       }
 
-      const data = {
+      const payload = {
         archive_url: archiveUrl,
         title: document.getElementById("title").value.trim(),
         username: document.getElementById("username").value.trim(),
@@ -320,9 +329,8 @@
         const res = await fetch(`${API_BASE}/upload`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+          body: JSON.stringify(payload)
         });
-
         const json = await res.json();
         if (res.ok && json.success) {
           message.textContent = "✅ Upload successful!";
@@ -338,7 +346,9 @@
       }
     };
 
-    // ========== SEARCH HANDLER (unchanged) ==========
+    /* ==============================================================
+       Search handling
+       ============================================================== */
     searchBtn.onclick = async () => {
       const query = searchInput.value.trim();
       if (!query) return alert("Please enter title, username, or ID to search!");
@@ -357,8 +367,8 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
         const data = await res.json();
+
         if (!res.ok || !data || data.length === 0) {
           searchResults.innerHTML = `<p style="color:#f87171;">No results found.</p>`;
           return;
@@ -366,7 +376,9 @@
 
         const results = Array.isArray(data) ? data : [data];
         searchResults.innerHTML = results.map(item => `
-          <div class="result-card" data-url="${item.archive_url}" data-title="${item.title}">
+          <div class="result-card"
+               data-url="${item.archive_url}"
+               data-title="${item.title}">
             <div class="result-title">${item.title || "Untitled"}</div>
             <div class="result-meta">
               👤 ${item.username || "Unknown"}<br>
@@ -375,18 +387,28 @@
           </div>
         `).join("");
 
+        // -----------------------------------------------------------------
+        // Click a result → show preview & fire rewarded ad in parallel
+        // -----------------------------------------------------------------
         document.querySelectorAll(".result-card").forEach(card => {
           card.onclick = async () => {
-            const url = card.dataset.url;
+            const url   = card.dataset.url;
             const title = card.dataset.title;
 
+            // Show UI first
             viewerTitle.textContent = title;
-            viewerFrame.style.display = "none"; // hide iframe
             previewContainer.style.display = "block";
+            viewerFrame.style.display = "none";
 
-            // ⭐ LOAD METADATA IMAGE
-            await loadPreviewImage(url);
+            // Load the image preview (async, fire‑and‑forget)
+            loadPreviewImage(url);
 
+            // Immediately ask native code to display a rewarded ad
+            if (window.Android && typeof Android.requestRewardedAd === "function") {
+              Android.requestRewardedAd(url);   // url is just passed back in onAdCompleted()
+            }
+
+            // Switch pages
             home.classList.add("hidden");
             viewerPage.classList.remove("hidden");
           };
@@ -398,13 +420,14 @@
       }
     };
 
-    // ============================================================
-    // ⭐ FUNCTION TO EXTRACT IMAGE FROM ARCHIVE METADATA
-    // ============================================================
+    /* ==============================================================
+       Load an image from Archive.org metadata (used by preview)
+       ============================================================== */
     async function loadPreviewImage(archiveUrl) {
       previewImage.style.display = "none";
 
       try {
+        // Archive identifier is the last segment of the URL
         const identifier = archiveUrl.split("/").pop();
         const metaUrl = `https://archive.org/metadata/${identifier}`;
 
@@ -413,27 +436,49 @@
 
         if (!metadata || !metadata.files) return;
 
-        // Look for best jpeg/png
-        const imageFile = metadata.files.find(f =>
-          /\.(jpg|jpeg|png)$/i.test(f.name)
-        );
-
+        // Find the first JPEG/PNG file – most likely what we want
+        const imageFile = metadata.files.find(f => /\.(jpe?g|png)$/i.test(f.name));
         if (!imageFile) return;
 
         previewImage.src = `https://archive.org/download/${identifier}/${imageFile.name}`;
         previewImage.style.display = "block";
-
       } catch (err) {
         console.log("Image extraction error:", err);
       }
     }
 
-    // ⭐ FULLSCREEN BUTTON
+    /* ==============================================================
+       Full‑screen button
+       ============================================================== */
     fullscreenBtn.onclick = () => {
       if (previewImage.requestFullscreen) previewImage.requestFullscreen();
       else if (previewImage.webkitRequestFullscreen) previewImage.webkitRequestFullscreen();
       else if (previewImage.msRequestFullscreen) previewImage.msRequestFullscreen();
     };
+
+    /* ==============================================================
+       Rewarded‑ad callbacks (called from native Java code)
+       ============================================================== */
+    function onAdPreloaded() {
+      console.log("✅ Rewarded ad preloaded");
+    }
+    function onAdFailedToPreload() {
+      console.warn("⚠️ Rewarded ad failed to preload");
+    }
+    function onAdNotAvailable() {
+      console.warn("⚠️ Rewarded ad not available");
+    }
+    function onAdCompleted(targetUrl) {
+      console.log("✅ Rewarded ad completed – target URL:", targetUrl);
+      // You could add extra reward logic here if needed.
+    }
+
+    /* ==============================================================
+       Pre‑load a rewarded ad as soon as the page is ready (if Android)
+       ============================================================== */
+    if (window.Android && typeof Android.preloadRewardedAd === "function") {
+      Android.preloadRewardedAd();
+    }
 
   </script>
 </body>
