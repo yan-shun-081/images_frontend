@@ -126,7 +126,7 @@
     }
 
     @keyframes spin {
-      0% { transform: rotate(0deg); }
+      0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
 
@@ -156,7 +156,7 @@
     .pdf-toolbar h2 {
       font-size: 1em;
       color: #93c5fd;
-      font-weight: 5;
+      font-weight: 500;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -187,47 +187,7 @@
 </head>
 
 <body>
-
-  <!-- ====================== AD GATE POPUP ====================== -->
-  <div id="adGate" style="
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.85);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:9999;
-  ">
-    <div style="
-      background:#0f172a;
-      padding:20px;
-      border-radius:12px;
-      text-align:center;
-      width:90%;
-      max-width:320px;
-    ">
-      <h3 style="color:#93c5fd;margin-bottom:10px">⏳ Time Limit Reached</h3>
-      <p style="color:#cbd5f5;font-size:14px">
-        Watch a short ad to continue accessing content
-      </p>
-      <button id="watchAdBtn" style="
-        margin-top:12px;
-        padding:10px 16px;
-        border:none;
-        border-radius:8px;
-        background:#60a5fa;
-        color:white;
-        font-weight:600;
-        cursor:pointer;
-      ">
-        ▶ Watch Ad
-      </button>
-    </div>
-  </div>
-  <!-- ===================== END AD GATE POPUP ==================== -->
-
   <header>📚 Image Stream</header>
-
   <div id="feed"></div>
   <div id="loader" class="loader"></div>
   <footer>Powered by Archive & Your Backend</footer>
@@ -241,25 +201,35 @@
     <iframe id="pdfFrame" class="pdf-iframe" src=""></iframe>
   </div>
 
-  <!-- ====================== MAIN APP SCRIPT ====================== -->
   <script>
-    const FEED = document.getElementById('feed');
-    const LOADER = document.getElementById('loader');
-    const VIEWER = document.getElementById('pdfViewer');
-    const PDF_FRAME = document.getElementById('pdfFrame');
-    const PDF_TITLE = document.getElementById('pdfTitle');
+    /* ------------------------------------------------------------------
+       Global UI references
+    ------------------------------------------------------------------ */
+    const FEED        = document.getElementById('feed');
+    const LOADER      = document.getElementById('loader');
+    const VIEWER      = document.getElementById('pdfViewer');
+    const PDF_FRAME   = document.getElementById('pdfFrame');
+    const PDF_TITLE   = document.getElementById('pdfTitle');
     const CLOSE_VIEWER = document.getElementById('closeViewer');
 
+    /* ------------------------------------------------------------------
+       Backend / paging
+    ------------------------------------------------------------------ */
     const BACKEND_URL = 'https://images_displaying_backend.erenyeager6880.workers.dev';
-
-    let allData = [];               // store all JSONs
-    let currentIndex = 0;
+    let allData = [], currentIndex = 0, loading = false;
     const BATCH_SIZE = 30;
-    let loading = false;
 
+    /* ------------------------------------------------------------------
+       Reward‑ad click counter (5 clicks → ad)
+    ------------------------------------------------------------------ */
+    let openCount = 0;    // number of times "Open Image" has been pressed
+
+    /* ------------------------------------------------------------------
+       Fetch JSON data from the backend
+    ------------------------------------------------------------------ */
     async function fetchData() {
       try {
-        const res = await fetch(BACKEND_URL);
+        const res  = await fetch(BACKEND_URL);
         const data = await res.json();
         LOADER.style.display = 'none';
 
@@ -269,20 +239,27 @@
         }
 
         allData = data;
-        renderNextBatch();            // first batch
-      } catch (err) {
+        renderNextBatch();
+
+        // Pre‑load a rewarded ad (if running inside the Android WebView)
+        if (window.Android && typeof Android.preloadRewardedAd === 'function') {
+          Android.preloadRewardedAd();
+        }
+      } catch (e) {
         LOADER.style.display = 'none';
         FEED.innerHTML = `<p style='text-align:center;color:#f87171'>Error loading data 😞</p>`;
-        console.error(err);
+        console.error(e);
       }
     }
 
+    /* ------------------------------------------------------------------
+       Render a batch of cards (30 per batch)
+    ------------------------------------------------------------------ */
     function renderNextBatch() {
       if (loading) return;
       loading = true;
 
       const nextBatch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
-
       nextBatch.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -290,19 +267,21 @@
         const preview = document.createElement('div');
         preview.className = 'preview';
 
-        // Extract thumbnail
+        // ----- Thumbnail (archive.org) -----
         let thumbUrl = '';
         if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
           const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
-          if (identifier) thumbUrl = `https://archive.org/services/img/${identifier}`;
+          if (identifier) {
+            thumbUrl = `https://archive.org/services/img/${identifier}`;
+          }
         }
-
         if (thumbUrl) {
           preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
         } else {
           preview.textContent = 'No Preview Available';
         }
 
+        // ----- Info -----
         const info = document.createElement('div');
         info.className = 'info';
         info.innerHTML = `
@@ -310,10 +289,11 @@
           <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
         `;
 
+        // ----- Open button (wrapped) -----
         const openBtn = document.createElement('button');
         openBtn.className = 'open-btn';
         openBtn.textContent = 'Open Image';
-        openBtn.onclick = () => openFullscreenImage(item.title, item.archive_url);
+        openBtn.onclick = () => handleOpenImage(item.title, item.archive_url);
 
         card.append(preview, info, openBtn);
         FEED.appendChild(card);
@@ -323,7 +303,9 @@
       loading = false;
     }
 
-    // Infinite scroll
+    /* ------------------------------------------------------------------
+       Infinite scroll – load the next batch when the user reaches bottom
+    ------------------------------------------------------------------ */
     window.addEventListener('scroll', () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
         if (currentIndex < allData.length && !loading) {
@@ -332,21 +314,55 @@
       }
     });
 
-    function openFullscreenImage(title, url) {
-      if (!url) return;
-      const embedUrl = url.includes('archive.org')
-        ? url.replace('/details/', '/embed/')
-        : url;
+    /* ------------------------------------------------------------------
+       Image viewer (fullscreen PDF/iframe)
+    ------------------------------------------------------------------ */
+    function openFullscreenImage(title, archiveUrl) {
+      if (!archiveUrl) return;
+      const embedUrl = archiveUrl.includes('archive.org')
+        ? archiveUrl.replace('/details/', '/embed/')
+        : archiveUrl;
       PDF_TITLE.textContent = title || 'Image Viewer';
       PDF_FRAME.src = embedUrl;
       VIEWER.classList.add('active');
     }
 
+    /* ------------------------------------------------------------------
+       Core click‑handler (+ reward‑ad logic)
+    ------------------------------------------------------------------ */
+    function handleOpenImage(title, archiveUrl) {
+      openCount++;
+
+      if (openCount >= 5) {
+        // Reset counter first
+        openCount = 0;
+
+        // 1️⃣ Open image immediately
+        openFullscreenImage(title, archiveUrl);
+
+        // 2️⃣ Ask the Android side to launch a rewarded ad
+        const embedUrl = archiveUrl.includes('archive.org')
+          ? archiveUrl.replace('/details/', '/embed/')
+          : archiveUrl;
+
+        if (window.Android && typeof Android.requestRewardedAd === 'function') {
+          Android.requestRewardedAd(embedUrl);
+        } else {
+          console.warn('Android bridge unavailable – cannot show rewarded ad.');
+        }
+      } else {
+        // Normal behaviour – just open the image.
+        openFullscreenImage(title, archiveUrl);
+      }
+    }
+
+    /* ------------------------------------------------------------------
+       Viewer controls
+    ------------------------------------------------------------------ */
     CLOSE_VIEWER.onclick = () => {
       VIEWER.classList.remove('active');
       PDF_FRAME.src = '';
     };
-
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         VIEWER.classList.remove('active');
@@ -354,131 +370,34 @@
       }
     });
 
-    // Pre‑load rewarded ad (once per page load)
-    if (window.Android && typeof Android.preloadRewardedAd === 'function') {
-      Android.preloadRewardedAd();
+    /* ------------------------------------------------------------------
+       Callbacks invoked from the native Android side
+       (the native code triggers these via evaluateJavascript)
+    ------------------------------------------------------------------ */
+    function onAdPreloaded() {
+      console.log('Rewarded ad preloaded.');
     }
 
+    function onAdFailedToPreload() {
+      console.warn('Failed to preload rewarded ad.');
+    }
+
+    function onAdNotAvailable() {
+      console.warn('No rewarded ad available right now.');
+    }
+
+    // Called when the rewarded ad finishes and the user earned the reward.
+    // The URL argument is the same that we passed to requestRewardedAd()
+    // (we already opened the image, so we just log here).
+    function onAdCompleted(url) {
+      console.log('Rewarded ad completed – user earned reward.');
+      // Additional reward handling can be placed here if desired.
+    }
+
+    /* ------------------------------------------------------------------
+       Kick‑off
+    ------------------------------------------------------------------ */
     fetchData();
   </script>
-  <!-- ==================== END MAIN APP SCRIPT ==================== -->
-
-  <!-- ====================== AD GATE TIMER SCRIPT ====================== -->
-  <script>
-    // --------------------------------------------------------------
-    // Time limits (seconds) after which the ad‑gate appears.
-    // --------------------------------------------------------------
-    const LIMITS = [
-      20,          // 20 sec
-      5 * 60,      // 5 min
-      10 * 60,     // 10 min
-      20 * 60,     // 20 min
-      30 * 60,     // 30 min
-      40 * 60,     // 40 min
-      50 * 60      // 50 min
-    ];
-
-    // Restore persisted values from sessionStorage
-    let elapsed     = Number(sessionStorage.getItem('elapsed'))      || 0;
-    let limitIndex  = Number(sessionStorage.getItem('limitIndex'))   || 0;
-    let unlockedUntil = Number(sessionStorage.getItem('unlockedUntil')) || 0;
-    let adInProgress = false;          // guard against double‑clicks
-
-    const AD_GATE = document.getElementById('adGate');
-    const WATCH_BTN = document.getElementById('watchAdBtn');
-
-    // --------------------------------------------------------------
-    // Main timer – runs each second.
-    // --------------------------------------------------------------
-    setInterval(() => {
-      // 🔒 If we are in an unlocked period, do nothing.
-      if (Date.now() < unlockedUntil) return;
-
-      // Increment elapsed only when not unlocked.
-      elapsed++;
-      sessionStorage.setItem('elapsed', elapsed);
-
-      // ⛔ Prevent instant re‑trigger while gate already visible.
-      if (AD_GATE.style.display === 'flex') return;
-
-      // Show gate when the next limit is reached.
-      if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
-        showAdGate();               // DO NOT increment limitIndex yet.
-      }
-    }, 1000);
-
-    // --------------------------------------------------------------
-    // Show / hide helpers (updated per specification)
-    // --------------------------------------------------------------
-    function showAdGate() {
-      // Close fullscreen viewer if it is open – otherwise its close button
-      // would stay blocked by the overlay.
-      if (VIEWER && VIEWER.classList.contains('active')) {
-        VIEWER.classList.remove('active');
-        PDF_FRAME.src = '';
-      }
-
-      AD_GATE.style.display = 'flex';
-      AD_GATE.style.pointerEvents = 'auto';
-      document.documentElement.style.overflow = 'hidden';
-    }
-
-    function hideAdGate() {
-      AD_GATE.style.display = 'none';
-      AD_GATE.style.pointerEvents = 'none';
-      document.documentElement.style.overflow = '';
-    }
-
-    // --------------------------------------------------------------
-    // User clicks “Watch Ad”
-    // --------------------------------------------------------------
-    WATCH_BTN.onclick = () => {
-      if (adInProgress) return;                 // prevent duplicate requests
-      adInProgress = true;
-      if (window.Android && typeof Android.requestRewardedAd === 'function') {
-        Android.requestRewardedAd('continue');
-      } else {
-        alert('Ads not available');
-        adInProgress = false;                  // reset flag if call fails
-      }
-    };
-
-    // --------------------------------------------------------------
-    // Called from native Android when the rewarded video finishes.
-    // --------------------------------------------------------------
-    window.onAdCompleted = function (target) {
-      if (!adInProgress) return;                // safety guard
-      adInProgress = false;
-
-      hideAdGate();
-
-      // 🔥 Force WebView repaint (prevents rendering lag)
-      requestAnimationFrame(() => {
-        document.body.offsetHeight;
-      });
-
-      // ⏭️ Move to next limit ONLY after success
-      limitIndex++;
-      sessionStorage.setItem('limitIndex', limitIndex);
-
-      // 🔥 RESET elapsed to the start of the just‑completed limit
-      elapsed = LIMITS[limitIndex - 1] || elapsed;
-      sessionStorage.setItem('elapsed', elapsed);
-
-      // 🔓 Unlock for 5 minutes and persist it
-      unlockedUntil = Date.now() + (5 * 60 * 1000);
-      sessionStorage.setItem('unlockedUntil', unlockedUntil);
-    };
-
-    // --------------------------------------------------------------
-    // Optional: native tells us an ad could not be shown.
-    // --------------------------------------------------------------
-    window.onAdNotAvailable = function () {
-      alert('Ad not available. Try again later.');
-      adInProgress = false;    // reset guard
-    };
-  </script>
-  <!-- ==================== END AD GATE TIMER SCRIPT ==================== -->
-
 </body>
 </html>
