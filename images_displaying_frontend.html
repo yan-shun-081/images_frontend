@@ -290,13 +290,11 @@
         const preview = document.createElement('div');
         preview.className = 'preview';
 
-        // Thumbnail from archive.org
+        // Extract thumbnail
         let thumbUrl = '';
         if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
           const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
-          if (identifier) {
-            thumbUrl = `https://archive.org/services/img/${identifier}`;
-          }
+          if (identifier) thumbUrl = `https://archive.org/services/img/${identifier}`;
         }
 
         if (thumbUrl) {
@@ -356,9 +354,7 @@
       }
     });
 
-    // -----------------------------------------------------------------
-    // Pre‑load a rewarded ad (once per page load)
-    // -----------------------------------------------------------------
+    // Pre‑load rewarded ad (once per page load)
     if (window.Android && typeof Android.preloadRewardedAd === 'function') {
       Android.preloadRewardedAd();
     }
@@ -382,10 +378,10 @@
       50 * 60      // 50 min
     ];
 
-    // Restore elapsed time from *session* storage (temporary)
+    // Restore elapsed time from sessionStorage (temporary)
     let elapsed = Number(sessionStorage.getItem('elapsed')) || 0;
-    let limitIndex = 0;          // next limit to test
-    let unlockedUntil = 0;        // ms timestamp until which user is free
+    let limitIndex = 0;               // next limit to check
+    let unlockedUntil = 0;             // timestamp (ms) until user is free
 
     const AD_GATE = document.getElementById('adGate');
     const WATCH_BTN = document.getElementById('watchAdBtn');
@@ -397,10 +393,10 @@
       elapsed++;
       sessionStorage.setItem('elapsed', elapsed); // persist for this session
 
-      // If user has a temporary 5‑minute unlock, skip gating.
+      // If a 5‑minute unlock is active, ignore limits.
       if (Date.now() < unlockedUntil) return;
 
-      // Has a limit been reached?
+      // Have we reached the next limit?
       if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
         showAdGate();
         limitIndex++;
@@ -412,7 +408,7 @@
     // --------------------------------------------------------------
     function showAdGate() {
       // Close fullscreen viewer if it is open – otherwise its close button
-      // would stay blocked by the pointer‑events rule.
+      // would be blocked by the overlay.
       if (VIEWER && VIEWER.classList.contains('active')) {
         VIEWER.classList.remove('active');
         PDF_FRAME.src = '';
@@ -424,19 +420,20 @@
 
     function hideAdGate() {
       AD_GATE.style.display = 'none';
+      AD_GATE.style.pointerEvents = 'none';
       enableContent();
     }
 
     function disableContent() {
-      // Block all pointer interaction **and** scrolling
-      document.body.style.pointerEvents = 'none';
-      document.body.style.overflow = 'hidden';
+      // Prevent scrolling while the gate is visible.
+      document.documentElement.style.overflow = 'hidden';
       AD_GATE.style.pointerEvents = 'auto';
     }
 
     function enableContent() {
+      // Restore normal scrolling & interaction.
+      document.documentElement.style.overflow = '';
       document.body.style.pointerEvents = 'auto';
-      document.body.style.overflow = '';
     }
 
     // --------------------------------------------------------------
@@ -451,10 +448,15 @@
     };
 
     // --------------------------------------------------------------
-    // Native Android calls this when the rewarded video finishes.
+    // Called from native Android when the rewarded video finishes.
     // --------------------------------------------------------------
-    window.onAdCompleted = function (target) { // `target` is the string sent from native
+    window.onAdCompleted = function (target) {
       hideAdGate();
+
+      // Force a repaint inside the WebView (prevents rendering lag)
+      requestAnimationFrame(() => {
+        document.body.offsetHeight;
+      });
 
       // Unlock the content for 5 minutes
       unlockedUntil = Date.now() + (5 * 60 * 1000);
