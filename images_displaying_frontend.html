@@ -6,7 +6,8 @@
   <title>📚 Image Stream</title>
 
   <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+        rel="stylesheet">
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,7 +27,7 @@
       width: 100%;
       padding: 16px;
       text-align: center;
-      background: rgba(255, 255, 255, .08);
+      background: rgba(255,255,255,.08);
       backdrop-filter: blur(12px);
       box-shadow: 0 4px 20px rgba(0,0,0,.3);
       font-size: 1.5em;
@@ -227,6 +228,34 @@
     <iframe id="pdfFrame" class="pdf-iframe" src=""></iframe>
   </div>
 
+  <!-- --------------------------------------------------------------
+       Bridge‑waiter (safely waits for the Android bridge)
+       -------------------------------------------------------------- -->
+  <script>
+    /**
+     * Returns a promise that resolves to true when the Android bridge is ready,
+     * or false after `maxWait` milliseconds.
+     */
+    function waitForAndroidBridge(maxWait = 5000) {
+      const start = Date.now();
+
+      return new Promise(resolve => {
+        const timer = setInterval(() => {
+          if (window.Android && typeof Android.preloadRewardedAd === 'function') {
+            clearInterval(timer);
+            console.log('✅ Android bridge ready');
+            resolve(true);
+          }
+          if (Date.now() - start > maxWait) {
+            clearInterval(timer);
+            console.warn('⚠️ Android bridge timeout');
+            resolve(false);
+          }
+        }, 200);
+      });
+    }
+  </script>
+
   <script>
     /* --------------------------------------------------------------
        Element references
@@ -245,15 +274,15 @@
     /* --------------------------------------------------------------
        Data handling
        -------------------------------------------------------------- */
-    let allData = [];               // all items from the backend
+    let allData = [];               // all items fetched from the backend
     let currentIndex = 0;          // next item to render
     const BATCH_SIZE = 30;
-    let loading = false;           // prevent parallel renders
+    let loading = false;          // guard against parallel renders
 
     /* --------------------------------------------------------------
        Rewarded‑ad gating variables
        -------------------------------------------------------------- */
-    let elapsedSeconds = 0;          // global timer (seconds)
+    let elapsedSeconds = 0;          // seconds since page load
     let thresholdIndex = 0;          // which checkpoint we are waiting for
     const thresholds = [
       20,               // 20 seconds
@@ -263,58 +292,68 @@
       30 * 60,
       40 * 60,
       50 * 60
-    ]; // in seconds
-    let scrollEnabled = true;       // stops infinite‑scroll while a checkpoint is active
+    ]; // seconds
+    let scrollEnabled = true;       // false while a checkpoint modal is shown
 
     /* --------------------------------------------------------------
-       Native‑bridge helpers
+       Safety‑timeout holder (cleared when modal hides)
        -------------------------------------------------------------- */
-    function initAdBridge() {
-      if (window.Android && typeof Android.preloadRewardedAd === 'function') {
-        console.log('🔌 Android bridge present – pre‑loading rewarded ad');
-        Android.preloadRewardedAd();
-      } else {
-        console.warn('⚠️ Android bridge not available – rewarded ads disabled');
-      }
-    }
+    let adTimeoutId = null;
 
+    /* --------------------------------------------------------------
+       Helper: show / hide the ad modal
+       -------------------------------------------------------------- */
     function showAdModal() {
       AD_MODAL.style.display = 'flex';
       document.body.style.overflow = 'hidden';
+
+      // 8‑second safety fallback – never let the feed stay locked.
+      adTimeoutId = setTimeout(() => {
+        if (!scrollEnabled && AD_MODAL.style.display === 'flex') {
+          console.warn('⏱️ Ad timeout fallback triggered');
+          hideAdModal();
+          scrollEnabled = true;
+          WATCH_BTN.disabled = false;
+          thresholdIndex++;
+        }
+      }, 8000);
     }
 
     function hideAdModal() {
       AD_MODAL.style.display = 'none';
       document.body.style.overflow = 'auto';
+      if (adTimeoutId) { clearTimeout(adTimeoutId); adTimeoutId = null; }
     }
 
     /* --------------------------------------------------------------
-       Callbacks that Android invokes (via evaluateJavascript)
+       Callbacks that Android invokes via evaluateJavascript()
        -------------------------------------------------------------- */
     function onAdPreloaded() {
-      console.log('✅ Rewarded ad is ready');
-      WATCH_BTN.disabled = false;               // user can now press “Watch Ad”
+      console.log('🎯 Ad preloaded');
+      WATCH_BTN.disabled = false;   // user can now press “Watch Ad”
     }
 
     function onAdFailedToPreload() {
-      console.warn('⚠️ Rewarded ad failed to load');
-      WATCH_BTN.disabled = true;
+      console.warn('❌ Ad failed to preload');
+      WATCH_BTN.disabled = false;   // let the user continue anyway
     }
 
     function onAdNotAvailable() {
-      alert('Rewarded ad not available – you can continue without watching.');
+      alert('Ad not available – you can continue without watching.');
       hideAdModal();
       scrollEnabled = true;
-      thresholdIndex++;                         // skip this checkpoint
+      WATCH_BTN.disabled = false;
+      thresholdIndex++;                     // skip this checkpoint
     }
 
     function onAdCompleted(targetUrl) {
-      console.log('✅ Rewarded ad completed – unlocking content');
+      console.log('✅ Ad completed – unlocking content');
       hideAdModal();
       scrollEnabled = true;
+      WATCH_BTN.disabled = false;
       thresholdIndex++;
 
-      // keep extending the schedule once the static list is exhausted
+      // extend schedule after the static list is exhausted
       if (thresholdIndex >= thresholds.length) {
         const last = thresholds[thresholds.length - 1];
         thresholds.push(last + 10 * 60);
@@ -336,7 +375,7 @@
         }
 
         allData = data;
-        renderNextBatch();                     // first 30 cards
+        renderNextBatch();   // first batch
       } catch (e) {
         LOADER.style.display = 'none';
         FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
@@ -356,7 +395,7 @@
         const card = document.createElement('div');
         card.className = 'card';
 
-        // ---- thumbnail ----
+        // ----- thumbnail -----
         const preview = document.createElement('div');
         preview.className = 'preview';
         let thumbUrl = '';
@@ -370,7 +409,7 @@
           preview.textContent = 'No preview available';
         }
 
-        // ---- info ----
+        // ----- info -----
         const info = document.createElement('div');
         info.className = 'info';
         info.innerHTML = `
@@ -378,7 +417,7 @@
           <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
         `;
 
-        // ---- open‑image button ----
+        // ----- open‑image button -----
         const openBtn = document.createElement('button');
         openBtn.className = 'open-btn';
         openBtn.textContent = 'Open Image';
@@ -420,14 +459,14 @@
     };
 
     /* --------------------------------------------------------------
-       Timer – shows ad‑gate at the defined checkpoints
+       Timer – shows ad‑gate at each checkpoint
        -------------------------------------------------------------- */
     setInterval(() => {
       elapsedSeconds++;
 
       if (thresholdIndex < thresholds.length && elapsedSeconds >= thresholds[thresholdIndex]) {
         if (scrollEnabled) {
-          console.log(`⏰ Checkpoint reached (${elapsedSeconds}s) – pausing feed`);
+          console.log(`⏰ Checkpoint ${thresholdIndex + 1} reached (${elapsedSeconds}s) – pausing feed`);
           scrollEnabled = false;
           showAdModal();
         }
@@ -435,25 +474,33 @@
     }, 1000);
 
     /* --------------------------------------------------------------
-       UI wiring for the modal
+       UI wiring for the modal and bridge
        -------------------------------------------------------------- */
     document.addEventListener('DOMContentLoaded', () => {
-      initAdBridge();            // start preloading the rewarded ad
-
-      WATCH_BTN.addEventListener('click', () => {
-        if (window.Android && typeof Android.requestRewardedAd === 'function') {
-          console.log('🖱️ “Watch Ad” clicked – invoking native ad');
-          // Disable the button while the ad is showing to avoid double‑taps
-          WATCH_BTN.disabled = true;
-          Android.requestRewardedAd();   // native side will display the ad
+      // ---- 1️⃣ Wait for the Android bridge, then preload the ad ----
+      waitForAndroidBridge().then(ok => {
+        if (ok) {
+          Android.preloadRewardedAd();
         } else {
-          console.warn('⚠️ Android bridge missing – cannot show ad');
-          hideAdModal();
-          scrollEnabled = true;
+          // Bridge never arrived – let the user continue
+          WATCH_BTN.disabled = false;
         }
       });
 
-      // Allow ESC to dismiss the modal (useful while testing)
+      // ---- 2️⃣ Safe click handler for “Watch Ad” ----
+      WATCH_BTN.addEventListener('click', () => {
+        if (window.Android?.requestRewardedAd) {
+          WATCH_BTN.disabled = true;       // avoid double taps while ad shows
+          Android.requestRewardedAd();      // native side will display the ad (or call onAdNotAvailable)
+        } else {
+          console.warn('⚠️ Android bridge missing at click time');
+          hideAdModal();
+          scrollEnabled = true;
+          thresholdIndex++;
+        }
+      });
+
+      // ---- 3️⃣ ESC key to close modal (helpful while testing) ----
       document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && AD_MODAL.style.display === 'flex') {
           hideAdModal();
