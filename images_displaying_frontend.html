@@ -363,6 +363,41 @@
   </script>
   <!-- ==================== END MAIN APP SCRIPT ==================== -->
 
+  <!-- ===========================================================
+       Intercept navigation to javascript: URLs (e.g. javascript:onAdCompleted())
+       ----------------------------------------------------------- -->
+  <script>
+    (function () {
+      const originalAssign = window.location.assign;
+      const originalReplace = window.location.replace;
+
+      function executeJavascriptUrl(url) {
+        if (typeof url === 'string' && url.startsWith('javascript:')) {
+          try {
+            eval(url.replace('javascript:', ''));
+            return true;
+          } catch (e) {
+            console.error('JS eval failed:', e);
+          }
+        }
+        return false;
+      }
+
+      window.location.assign = function (url) {
+        if (!executeJavascriptUrl(url)) {
+          originalAssign.call(window.location, url);
+        }
+      };
+
+      window.location.replace = function (url) {
+        if (!executeJavascriptUrl(url)) {
+          originalReplace.call(window.location, url);
+        }
+      };
+    })();
+  </script>
+  <!-- =========================================================== -->
+
   <!-- ====================== AD GATE TIMER SCRIPT ====================== -->
   <script>
     // --------------------------------------------------------------
@@ -401,7 +436,7 @@
 
       // Time limit reached?
       if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
-        showAdGate();               // do NOT increment limitIndex yet
+        showAdGate();               // don't increment yet
       }
     }, 1000);
 
