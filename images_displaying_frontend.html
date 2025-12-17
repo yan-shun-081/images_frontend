@@ -156,7 +156,7 @@
     .pdf-toolbar h2 {
       font-size: 1em;
       color: #93c5fd;
-      font-weight: 500;
+      font-weight: 5;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -268,8 +268,8 @@
           return;
         }
 
-        allData = data;                // temporary storage
-        renderNextBatch();             // first batch
+        allData = data;
+        renderNextBatch();            // first batch
       } catch (err) {
         LOADER.style.display = 'none';
         FEED.innerHTML = `<p style='text-align:center;color:#f87171'>Error loading data 😞</p>`;
@@ -290,7 +290,7 @@
         const preview = document.createElement('div');
         preview.className = 'preview';
 
-        // Extract thumbnail from archive.org URL
+        // Thumbnail from archive.org
         let thumbUrl = '';
         if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
           const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
@@ -356,14 +356,14 @@
       }
     });
 
-    fetchData();
-
-    // --------------------------------------------------------------
+    // -----------------------------------------------------------------
     // Pre‑load a rewarded ad (once per page load)
-    // --------------------------------------------------------------
+    // -----------------------------------------------------------------
     if (window.Android && typeof Android.preloadRewardedAd === 'function') {
       Android.preloadRewardedAd();
     }
+
+    fetchData();
   </script>
   <!-- ==================== END MAIN APP SCRIPT ==================== -->
 
@@ -382,25 +382,25 @@
       50 * 60      // 50 min
     ];
 
-    // Restore elapsed time (if any) from localStorage
-    let elapsed = Number(localStorage.getItem('elapsed')) || 0;
-    let limitIndex = 0;          // which limit we are waiting for
-    let unlockedUntil = 0;       // timestamp (ms) until which the user is free
+    // Restore elapsed time from *session* storage (temporary)
+    let elapsed = Number(sessionStorage.getItem('elapsed')) || 0;
+    let limitIndex = 0;          // next limit to test
+    let unlockedUntil = 0;        // ms timestamp until which user is free
 
     const AD_GATE = document.getElementById('adGate');
     const WATCH_BTN = document.getElementById('watchAdBtn');
 
     // --------------------------------------------------------------
-    // Main timer – runs every second.
+    // Main timer – runs each second.
     // --------------------------------------------------------------
     setInterval(() => {
       elapsed++;
-      localStorage.setItem('elapsed', elapsed);   // persist
+      sessionStorage.setItem('elapsed', elapsed); // persist for this session
 
-      // If user has a temporary unlock, skip gating
+      // If user has a temporary 5‑minute unlock, skip gating.
       if (Date.now() < unlockedUntil) return;
 
-      // Have we reached the next limit?
+      // Has a limit been reached?
       if (limitIndex < LIMITS.length && elapsed >= LIMITS[limitIndex]) {
         showAdGate();
         limitIndex++;
@@ -411,8 +411,8 @@
     // Show / hide helpers
     // --------------------------------------------------------------
     function showAdGate() {
-      // Close the fullscreen viewer (if it's open) so the pointer‑events block
-      // does not also lock the viewer’s close button.
+      // Close fullscreen viewer if it is open – otherwise its close button
+      // would stay blocked by the pointer‑events rule.
       if (VIEWER && VIEWER.classList.contains('active')) {
         VIEWER.classList.remove('active');
         PDF_FRAME.src = '';
@@ -428,21 +428,22 @@
     }
 
     function disableContent() {
-      // Prevent interaction with the page while the gate is visible.
+      // Block all pointer interaction **and** scrolling
       document.body.style.pointerEvents = 'none';
+      document.body.style.overflow = 'hidden';
       AD_GATE.style.pointerEvents = 'auto';
     }
 
     function enableContent() {
       document.body.style.pointerEvents = 'auto';
+      document.body.style.overflow = '';
     }
 
     // --------------------------------------------------------------
     // User clicks “Watch Ad”
     // --------------------------------------------------------------
     WATCH_BTN.onclick = () => {
-      if (window.Android && Android.requestRewardedAd) {
-        // Android interface supplied by your native wrapper.
+      if (window.Android && typeof Android.requestRewardedAd === 'function') {
         Android.requestRewardedAd('continue');
       } else {
         alert('Ads not available');
@@ -450,21 +451,28 @@
     };
 
     // --------------------------------------------------------------
-    // Called from native Android code when the reward video finishes.
+    // Native Android calls this when the rewarded video finishes.
     // --------------------------------------------------------------
-    window.onAdCompleted = function (target) {   // ← receives the string sent by native
+    window.onAdCompleted = function (target) { // `target` is the string sent from native
       hideAdGate();
 
-      // Unlock the content for 5 minutes (300 000 ms)
+      // Unlock the content for 5 minutes
       unlockedUntil = Date.now() + (5 * 60 * 1000);
     };
 
     // --------------------------------------------------------------
-    // Optional: native code tells us an ad could not be shown.
+    // Optional: native tells us an ad could not be shown.
     // --------------------------------------------------------------
     window.onAdNotAvailable = function () {
       alert('Ad not available. Try again later.');
     };
+
+    // --------------------------------------------------------------
+    // Clean up temporary storage when the page is left.
+    // --------------------------------------------------------------
+    const clearTimerStorage = () => sessionStorage.removeItem('elapsed');
+    window.addEventListener('pagehide', clearTimerStorage);
+    window.addEventListener('beforeunload', clearTimerStorage);
   </script>
   <!-- ==================== END AD GATE TIMER SCRIPT ==================== -->
 
