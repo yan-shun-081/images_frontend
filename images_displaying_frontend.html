@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=5,user-scalable=yes" />
 <title>📚 Image Stream</title>
 
-<!-- Font -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
       rel="stylesheet">
 
@@ -68,21 +68,12 @@
     align-items:center;
     justify-content:center;
   }
-  .preview img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
+  .preview img{ width:100%; height:100%; object-fit:cover; }
 
-  /* wrapper needed for the red “...” overlay */
-  .preview-wrapper{
-    position:relative;
-    width:100%;
-  }
+  .preview-wrapper{ position:relative; width:100%; }
   .ellipsis-overlay{
     position:absolute;
-    top:4px;
-    left:4px;
+    top:4px; left:4px;
     color:#ff4500;               /* bright dark‑red */
     font-size:1.8em;
     font-weight:bold;
@@ -118,7 +109,6 @@
   }
   .open-btn:hover{background:#3b82f6;}
 
-  /* tiny share‑icon placed above the “Open Image” button */
   .share-symbol{
     background:transparent;
     border:none;
@@ -193,17 +183,19 @@
 
   .pdf-content{
     flex-grow:1;
-    overflow:auto;               /* pinch‑to‑zoom works natively */
+    overflow:auto;
+    touch-action:none;
   }
   .pdf-iframe{
     width:100%;
     height:100%;
     border:none;
+    display:block;
   }
 </style>
 </head>
-
 <body>
+
 <header>📚 Image Stream</header>
 
 <div id="feed"></div>
@@ -232,6 +224,7 @@ const VIEWER      = document.getElementById('pdfViewer');
 const PDF_FRAME   = document.getElementById('pdfFrame');
 const PDF_TITLE   = document.getElementById('pdfTitle');
 const CLOSE_VIEWER = document.getElementById('closeViewer');
+const PDF_CONTENT = document.querySelector('.pdf-content');
 
 /* --------------------------------------------------------------
    Backend / paging
@@ -241,13 +234,13 @@ let allData = [], displayedCount = 0, loading = false;
 const BATCH_SIZE = 30;
 
 /* --------------------------------------------------------------
-   Share‑page constants (new values)
+   Share‑page constants
 -------------------------------------------------------------- */
 const PAGE_NAME = 'free images content';
 const PAGE_ID   = 2;
 
 /* --------------------------------------------------------------
-   Helper – get thumbnail URL from archive.org "details" link
+   Helper – get thumbnail URL from archive.org "details"
 -------------------------------------------------------------- */
 function getThumbnailUrl(item){
   if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
@@ -258,12 +251,12 @@ function getThumbnailUrl(item){
 }
 
 /* --------------------------------------------------------------
-   Fetch JSON data from the backend
+   Fetch JSON data
 -------------------------------------------------------------- */
-async function fetchData() {
+async function fetchData(){
   try{
-    const res  = await fetch(BACKEND_URL);
-    const data = await res.json();
+    const res   = await fetch(BACKEND_URL);
+    const data  = await res.json();
 
     LOADER.style.display = 'none';
 
@@ -271,7 +264,6 @@ async function fetchData() {
       FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No Images found 😢</p>";
       return;
     }
-
     allData = data;
     renderNextBatch();
   }catch(e){
@@ -282,43 +274,40 @@ async function fetchData() {
 }
 
 /* --------------------------------------------------------------
-   Render a batch of cards (30 per batch)
+   Render a batch of cards
 -------------------------------------------------------------- */
 function renderNextBatch(){
   if (loading) return;
   loading = true;
 
   const batch = allData.slice(displayedCount, displayedCount + BATCH_SIZE);
-
   batch.forEach((item,i)=>{
-    const absIdx = displayedCount + i;   // absolute index for share button
+    const absIdx = displayedCount + i;       // absolute index for sharing
 
     const card = document.createElement('div');
     card.className = 'card';
 
-    /* ---- Thumbnail & optional red “...” overlay ---- */
+    /* ----- Thumbnail + red “...” for PNG/JPG ----- */
     const thumbUrl = getThumbnailUrl(item);
-    const preview = document.createElement('div');
+    const preview  = document.createElement('div');
     preview.className = 'preview';
     if (thumbUrl){
       preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
     }else{
       preview.textContent = 'No Preview Available';
     }
-
-    const previewWrapper = document.createElement('div');
-    previewWrapper.className = 'preview-wrapper';
-    previewWrapper.appendChild(preview);
-
-    const lowerUrl = item.archive_url?.toLowerCase() || '';
-    if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg')){
+    const wrapper = document.createElement('div');
+    wrapper.className = 'preview-wrapper';
+    wrapper.appendChild(preview);
+    const low = item.archive_url?.toLowerCase() || '';
+    if (low.endsWith('.png') || low.endsWith('.jpg')){
       const ellipsis = document.createElement('div');
       ellipsis.className = 'ellipsis-overlay';
       ellipsis.textContent = '...';
-      previewWrapper.appendChild(ellipsis);
+      wrapper.appendChild(ellipsis);
     }
 
-    /* ---- Info ---- */
+    /* ----- Info ----- */
     const info = document.createElement('div');
     info.className = 'info';
     info.innerHTML = `
@@ -326,21 +315,21 @@ function renderNextBatch(){
       <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
     `;
 
-    /* ---- Share symbol (tiny) ---- */
+    /* ----- Tiny share symbol ----- */
     const shareBtn = document.createElement('button');
     shareBtn.className = 'share-symbol';
     shareBtn.title = 'Share';
     shareBtn.dataset.index = absIdx;
     shareBtn.innerHTML = '🔗';
 
-    /* ---- Open button ---- */
+    /* ----- Open button ----- */
     const openBtn = document.createElement('button');
     openBtn.className = 'open-btn';
     openBtn.textContent = 'Open Image';
     openBtn.onclick = () => openFullscreenImage(item.title, item.archive_url);
 
-    /* ---- Assemble card ---- */
-    card.append(previewWrapper, info, shareBtn, openBtn);
+    /* ----- Assemble ----- */
+    card.append(wrapper, info, shareBtn, openBtn);
     FEED.appendChild(card);
     requestAnimationFrame(()=>card.classList.add('visible'));
   });
@@ -350,7 +339,7 @@ function renderNextBatch(){
 }
 
 /* --------------------------------------------------------------
-   Infinite scroll – load next batch when near bottom
+   Infinite scroll
 -------------------------------------------------------------- */
 window.addEventListener('scroll',()=>{
   if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200){
@@ -361,8 +350,18 @@ window.addEventListener('scroll',()=>{
 });
 
 /* --------------------------------------------------------------
-   Image viewer – fullscreen iframe (pinch‑to‑zoom works natively)
+   Fullscreen viewer – pinch‑to‑zoom
 -------------------------------------------------------------- */
+let currentScale = 1;
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 5;
+
+function applyScale(){
+  PDF_FRAME.style.transform = `scale(${currentScale})`;
+  PDF_FRAME.style.transformOrigin = '0 0';
+}
+
+/* Open image */
 function openFullscreenImage(title, archiveUrl){
   if (!archiveUrl) return;
   const embedUrl = archiveUrl.includes('archive.org')
@@ -371,29 +370,79 @@ function openFullscreenImage(title, archiveUrl){
   PDF_TITLE.textContent = title || 'Image Viewer';
   PDF_FRAME.src = embedUrl;
   VIEWER.classList.add('active');
+
+  // reset zoom each time a new image is opened
+  currentScale = 1;
+  applyScale();
 }
 
-/* --------------------------------------------------------------
-   Viewer controls
--------------------------------------------------------------- */
-CLOSE_VIEWER.onclick = () => {
+/* Close viewer */
+function closeViewer(){
   VIEWER.classList.remove('active');
   PDF_FRAME.src = '';
-};
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape'){
-    VIEWER.classList.remove('active');
-    PDF_FRAME.src = '';
+  currentScale = 1;
+  applyScale();
+}
+CLOSE_VIEWER.onclick = closeViewer;
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') closeViewer();
+});
+
+/* ----- Mouse‑wheel zoom ----- */
+PDF_CONTENT.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const factor = -e.deltaY > 0 ? 1.1 : 0.9;
+  const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale*factor));
+  if (newScale!==currentScale){
+    const rect = PDF_FRAME.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    const scrollL = PDF_CONTENT.scrollLeft;
+    const scrollT = PDF_CONTENT.scrollTop;
+    const ratio = newScale/currentScale;
+    currentScale = newScale;
+    applyScale();
+    PDF_CONTENT.scrollLeft = (offsetX + scrollL)*ratio - offsetX;
+    PDF_CONTENT.scrollTop  = (offsetY + scrollT)*ratio - offsetY;
   }
+}, {passive:false});
+
+/* ----- Pinch‑zoom (touch) ----- */
+let pinchStartDist = null;
+let pinchStartScale = 1;
+function getTouchDist(t1,t2){
+  const dx = t2.clientX - t1.clientX;
+  const dy = t2.clientY - t1.clientY;
+  return Math.hypot(dx,dy);
+}
+PDF_CONTENT.addEventListener('touchstart', e=>{
+  if (e.touches.length===2){
+    pinchStartDist = getTouchDist(e.touches[0], e.touches[1]);
+    pinchStartScale = currentScale;
+    e.preventDefault();
+  }
+}, {passive:false});
+
+PDF_CONTENT.addEventListener('touchmove', e=>{
+  if (e.touches.length===2 && pinchStartDist){
+    const curDist = getTouchDist(e.touches[0], e.touches[1]);
+    const scaleFactor = curDist / pinchStartDist;
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale*scaleFactor));
+    if (newScale!==currentScale){
+      currentScale = newScale;
+      applyScale();
+    }
+    e.preventDefault();
+  }
+}, {passive:false});
+
+PDF_CONTENT.addEventListener('touchend', e=>{
+  if (e.touches.length<2) pinchStartDist = null;
 });
 
 /* --------------------------------------------------------------
-   ------- SHARE LOGIC (copied from the video page) -------
+   Share logic (copied from the video page)
 -------------------------------------------------------------- */
-
-/**
- * Build the plain‑text payload used for WhatsApp fallback.
- */
 function buildShareText(img){
   const title = img.title || 'Untitled image';
   const imgId = img.id ?? '-';
@@ -407,27 +456,22 @@ App name: YAN_1
 Developer: YAN`;
 }
 
-/**
- * Create a composite JPEG (thumbnail + required metadata) – returns a Blob.
- */
 async function createCompositeImage(img){
   const thumbUrl = getThumbnailUrl(img);
   if (!thumbUrl) throw new Error('No thumbnail URL');
 
-  // ----- load thumbnail (CORS‑enabled) -----
   const thumbnail = await new Promise((res,rej)=>{
     const i = new Image();
     i.crossOrigin = 'anonymous';
-    i.onload = () => res(i);
+    i.onload = ()=>res(i);
     i.onerror = rej;
     i.src = thumbUrl;
   });
 
-  // ----- calculate canvas size -----
   const MAX_W = 800;
-  const scale = Math.min(1, MAX_W / thumbnail.width);
-  const w = thumbnail.width * scale;
-  const h = thumbnail.height * scale;
+  const scale = Math.min(1, MAX_W/thumbnail.width);
+  const w = thumbnail.width*scale;
+  const h = thumbnail.height*scale;
 
   const lines = [
     `Page name: ${PAGE_NAME}`,
@@ -440,47 +484,35 @@ async function createCompositeImage(img){
   ];
   const PADDING = 20;
   const LINE_H = 28;
-  const textHeight = lines.length * LINE_H + PADDING;
+  const textHeight = lines.length*LINE_H + PADDING;
   const canvasH = h + textHeight;
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = canvasH;
   const ctx = canvas.getContext('2d');
 
-  // white background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0,0,w,canvasH);
-
-  // thumbnail on top
   ctx.drawImage(thumbnail,0,0,w,h);
-
-  // text block
   ctx.fillStyle = '#333333';
   ctx.font = '20px Arial';
   ctx.textBaseline = 'top';
   const startY = h + PADDING/2;
   lines.forEach((txt,idx)=>ctx.fillText(txt, PADDING, startY + idx*LINE_H));
 
-  // export to Blob
   return new Promise((res,rej)=>{
-    canvas.toBlob(blob => {
+    canvas.toBlob(blob=>{
       if (blob) res(blob);
       else rej(new Error('Canvas toBlob failed'));
     },'image/jpeg',0.92);
   });
 }
 
-/**
- * Share routine:
- *   1️⃣ Web‑Share API (if available)
- *   2️⃣ Android bridge (if present)
- *   3️⃣ WhatsApp text fallback
- */
 async function shareThumbnail(idx){
   const img = allData[idx];
   if (!img) return;
 
-  // ------- 1️⃣ Web‑Share -------
+  /* 1️⃣ Web‑Share API */
   try{
     if (navigator.canShare && navigator.canShare({files:[]})){
       const blob = await createCompositeImage(img);
@@ -495,18 +527,18 @@ async function shareThumbnail(idx){
     console.warn('Web‑Share not usable', e);
   }
 
-  // ------- 2️⃣ Android bridge -------
+  /* 2️⃣ Android bridge */
   if (window.Android && typeof window.Android.shareImage === 'function'){
     try{
       const blob = await createCompositeImage(img);
       const dataUrl = await new Promise((res,rej)=>{
         const fr = new FileReader();
-        fr.onload = () => res(fr.result);
+        fr.onload = ()=>res(fr.result);
         fr.onerror = rej;
         fr.readAsDataURL(blob);
       });
       const fileName = `image_${img.id ?? Date.now()}.jpg`;
-      const text     = buildShareText(img);
+      const text = buildShareText(img);
       window.Android.shareImage(dataUrl, fileName, img.title || 'Image', text);
       console.log('✅ delegated share to Android bridge');
       return;
@@ -515,26 +547,24 @@ async function shareThumbnail(idx){
     }
   }
 
-  // ------- 3️⃣ WhatsApp fallback -------
+  /* 3️⃣ WhatsApp fallback */
   const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(img))}`;
   window.open(wa, '_blank');
 }
 
-/* --------------------------------------------------------------
-   Delegated click listener – catches clicks on share symbols
--------------------------------------------------------------- */
-FEED.addEventListener('click', e => {
-  const shareBtn = e.target.closest('.share-symbol');
-  if (!shareBtn) return;
-  e.stopPropagation();               // prevent “Open Image” activation
-  const idx = Number(shareBtn.dataset.index);
+/* ----- Click listener for tiny share symbols ----- */
+FEED.addEventListener('click', e=>{
+  const btn = e.target.closest('.share-symbol');
+  if (!btn) return;
+  e.stopPropagation();                     // avoid opening the image
+  const idx = Number(btn.dataset.index);
   if (!Number.isNaN(idx)){
     shareThumbnail(idx);
   }
 });
 
 /* --------------------------------------------------------------
-   Kick‑off
+   Initialise
 -------------------------------------------------------------- */
 fetchData();
 </script>
