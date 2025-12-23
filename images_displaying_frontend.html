@@ -153,10 +153,12 @@ let allData = [], displayedCount = 0, loading = false;
 const BATCH_SIZE = 30;
 
 /* --------------------------------------------------------------
-   Share‑page constants
+   Page constants
 -------------------------------------------------------------- */
 const PAGE_NAME = 'free images content';
 const PAGE_ID   = 2;
+const APP_NAME = 'YAN_1';
+const DEVELOPER = 'YAN';
 
 /* --------------------------------------------------------------
    Helper – thumbnail URL for archive.org “details” links
@@ -198,7 +200,7 @@ function renderNextBatch(){
   loading = true;
   const batch = allData.slice(displayedCount, displayedCount + BATCH_SIZE);
   batch.forEach((item,i)=>{
-    const absIdx = displayedCount + i;   // absolute index for sharing
+    const absIdx = displayedCount + i;   // absolute index used for sharing
 
     const card = document.createElement('div');
     card.className = 'card';
@@ -215,7 +217,7 @@ function renderNextBatch(){
     const wrapper = document.createElement('div');
     wrapper.className = 'preview-wrapper';
     wrapper.appendChild(preview);
-    const low = item.archive_url?.toLowerCase()||'';
+    const low = (item.archive_url||'').toLowerCase();
     if (low.endsWith('.png') || low.endsWith('.jpg')){
       const ellipsis = document.createElement('div');
       ellipsis.className = 'ellipsis-overlay';
@@ -231,7 +233,7 @@ function renderNextBatch(){
       <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
     `;
 
-    /* ----- tiny share icon ----- */
+    /* ----- share button (tiny icon) ----- */
     const shareBtn = document.createElement('button');
     shareBtn.className = 'share-symbol';
     shareBtn.title = 'Share';
@@ -296,26 +298,26 @@ function closeViewer(){
 }
 CLOSE_VIEWER.onclick = closeViewer;
 document.addEventListener('keydown',e=>{
-  if (e.key==='Escape') closeViewer();
+  if (e.key === 'Escape') closeViewer();
 });
 
 /* ----- mouse‑wheel zoom ----- */
 PDF_CONTENT.addEventListener('wheel',e=>{
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
-  const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale*factor));
-  if (newScale!==currentScale){
-    // keep the point under the cursor steady
+  const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * factor));
+  if (newScale !== currentScale){
+    // keep zoom focus under cursor
     const rect = PDF_FRAME.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
     const scrollL = PDF_CONTENT.scrollLeft;
     const scrollT = PDF_CONTENT.scrollTop;
-    const ratio = newScale/currentScale;
+    const ratio = newScale / currentScale;
     currentScale = newScale;
     applyScale();
-    PDF_CONTENT.scrollLeft = (cx + scrollL)*ratio - cx;
-    PDF_CONTENT.scrollTop  = (cy + scrollT)*ratio - cy;
+    PDF_CONTENT.scrollLeft = (cx + scrollL) * ratio - cx;
+    PDF_CONTENT.scrollTop  = (cy + scrollT) * ratio - cy;
   }
 },{passive:false});
 
@@ -339,8 +341,8 @@ PDF_CONTENT.addEventListener('touchmove',e=>{
   if (e.touches.length===2 && pinchStartDist){
     const curDist = getDist(e.touches[0], e.touches[1]);
     const scaleFactor = curDist / pinchStartDist;
-    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale*scaleFactor));
-    if (newScale!==currentScale){
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, pinchStartScale * scaleFactor));
+    if (newScale !== currentScale){
       currentScale = newScale;
       applyScale();
     }
@@ -353,7 +355,7 @@ PDF_CONTENT.addEventListener('touchend',e=>{
 });
 
 /* --------------------------------------------------------------
-   Share logic (same as video page)
+   Share logic – Build text & create merged image
 -------------------------------------------------------------- */
 function buildShareText(img){
   const title = img.title || 'Untitled image';
@@ -364,16 +366,17 @@ Page ID: ${PAGE_ID}
 Image title: ${title}
 Image ID: ${imgId}
 Username: ${user}
-App name: YAN_1
-Developer: YAN`;
+App name: ${APP_NAME}
+Developer: ${DEVELOPER}`;
 }
 
-/* Create composite (white background + thumbnail + text) */
-async function createCompositeImage(img){
+/* Create a single image that contains the archive image + white area with details */
+async function createMergedImage(img){
   const thumbUrl = getThumbnailUrl(img);
-  if (!thumbUrl) throw new Error('No thumbnail URL');
+  if (!thumbUrl) throw new Error('No thumbnail URL available');
 
-  const thumbnail = await new Promise((res,rej)=>{
+  // Load the archive image (thumbnail)
+  const image = await new Promise((res,rej)=>{
     const i = new Image();
     i.crossOrigin = 'anonymous';
     i.onload = ()=>res(i);
@@ -381,93 +384,88 @@ async function createCompositeImage(img){
     i.src = thumbUrl;
   });
 
+  // Limit max width for easier sharing (800px)
   const MAX_W = 800;
-  const scale = Math.min(1, MAX_W/thumbnail.width);
-  const w = thumbnail.width * scale;
-  const h = thumbnail.height * scale;
+  const scale = Math.min(1, MAX_W / image.width);
+  const imgW = image.width * scale;
+  const imgH = image.height * scale;
 
+  // Text block configuration
   const lines = [
     `Page name: ${PAGE_NAME}`,
     `Page ID: ${PAGE_ID}`,
     `Image title: ${img.title || 'Untitled'}`,
     `Image ID: ${img.id ?? '-'}`,
     `Username: ${img.username || '-'}`,
-    `App name: YAN_1`,
-    `Developer: YAN`
+    `App name: ${APP_NAME}`,
+    `Developer: ${DEVELOPER}`
   ];
   const PADDING = 20;
   const LINE_H  = 28;
-  const textHeight = lines.length*LINE_H + PADDING;
-  const canvasH = h + textHeight;
+  const textBlockHeight = lines.length * LINE_H + PADDING * 2;
 
+  // Final canvas height = image height + text block height
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = canvasH;
+  canvas.width = imgW;
+  canvas.height = imgH + textBlockHeight;
   const ctx = canvas.getContext('2d');
 
-  // white background
+  // White background (covers whole canvas)
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0,0,w,canvasH);
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // thumbnail
-  ctx.drawImage(thumbnail,0,0,w,h);
+  // Draw the archive image at the top
+  ctx.drawImage(image, 0, 0, imgW, imgH);
 
-  // text
+  // Draw white rectangle for text (already white background, but keep for clarity)
+  // We'll just write text over the white area below the image
+
+  // Write text
   ctx.fillStyle = '#333333';
   ctx.font = '20px Arial';
   ctx.textBaseline = 'top';
-  const startY = h + PADDING/2;
-  lines.forEach((txt,idx)=>ctx.fillText(txt, PADDING, startY + idx*LINE_H));
+  const startY = imgH + PADDING / 2;
+  lines.forEach((txt, idx) => {
+    ctx.fillText(txt, PADDING, startY + idx * LINE_H);
+  });
 
+  // Export to Blob (JPEG)
   return new Promise((res,rej)=>{
-    canvas.toBlob(blob=>{
+    canvas.toBlob(blob => {
       if (blob) res(blob);
       else rej(new Error('Canvas toBlob failed'));
-    },'image/jpeg',0.92);
+    }, 'image/jpeg', 0.92);
   });
 }
 
-/* Share routine */
+/* Share routine – Android bridge (fallback to plain WhatsApp text) */
 async function shareThumbnail(idx){
   const img = allData[idx];
   if (!img) return;
 
-  // 1️⃣ Web‑Share API
   try{
-    if (navigator.canShare && navigator.canShare({files:[]})){
-      const blob = await createCompositeImage(img);
-      const file = new File([blob], `image_${img.id ?? Date.now()}.jpg`, {type:blob.type});
-      if (navigator.share && navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title: img.title || ''});
-        console.log('✅ shared via Web‑Share API');
-        return;
-      }
+    // Create merged image (archive image + details on white background)
+    const blob = await createMergedImage(img);
+    const dataUrl = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+    const fileName = `image_${img.id ?? Date.now()}.jpg`;
+    const shareText = buildShareText(img);
+
+    // Try Android bridge
+    if (window.Android && typeof window.Android.shareImage === 'function'){
+      window.Android.shareImage(dataUrl, fileName, img.title || 'Image', shareText);
+      console.log('✅ Shared via Android bridge');
+      return;
     }
   }catch(e){
-    console.warn('Web‑Share not usable', e);
+    console.warn('Error preparing shared image:', e);
   }
 
-  // 2️⃣ Android bridge
-  if (window.Android && typeof window.Android.shareImage === 'function'){
-    try{
-      const blob = await createCompositeImage(img);
-      const dataUrl = await new Promise((res,rej)=>{
-        const fr = new FileReader();
-        fr.onload = ()=>res(fr.result);
-        fr.onerror = rej;
-        fr.readAsDataURL(blob);
-      });
-      const fileName = `image_${img.id ?? Date.now()}.jpg`;
-      const text = buildShareText(img);
-      window.Android.shareImage(dataUrl, fileName, img.title || 'Image', text);
-      console.log('✅ delegated share to Android bridge');
-      return;
-    }catch(e){
-      console.error('Android bridge share failed – fallback', e);
-    }
-  }
-
-  // 3️⃣ WhatsApp fallback (text‑only)
+  // Fallback – open WhatsApp with just text (no image)
   const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(img))}`;
   window.open(wa, '_blank');
 }
@@ -476,7 +474,7 @@ async function shareThumbnail(idx){
 FEED.addEventListener('click', e=>{
   const btn = e.target.closest('.share-symbol');
   if (!btn) return;
-  e.stopPropagation();                     // avoid “Open Image”
+  e.stopPropagation(); // prevent “Open Image”
   const idx = Number(btn.dataset.index);
   if (!Number.isNaN(idx)){
     shareThumbnail(idx);
