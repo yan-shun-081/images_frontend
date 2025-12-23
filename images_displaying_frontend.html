@@ -61,18 +61,25 @@
   .meta{
     font-size:.85em;color:#94a3b8;word-break:break-word;
   }
-  .open-btn{
-    margin-top:10px;background:#60a5fa;color:#fff;
-    border:none;border-radius:8px;padding:10px;
-    font-weight:500;cursor:pointer;transition:background .25s ease;
+  .open-btn,
+  .share-btn{
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    padding:10px;
+    font-weight:500;
+    cursor:pointer;
+    transition:background .25s ease;
     font-size:.95em;
   }
-  .open-btn:hover{background:#3b82f6;}
-  .share-symbol{
-    background:transparent;border:none;color:#ff4500;
-    cursor:pointer;font-size:1.2em;margin-left:8px;
-    vertical-align:middle;
+  .open-btn{
+    background:#60a5fa;color:#fff;
   }
+  .open-btn:hover{background:#3b82f6;}
+  .share-btn{
+    background:#34d399;color:#fff;
+  }
+  .share-btn:hover{background:#10b981;}
   .loader{
     margin-top:60px;border:6px solid rgba(255,255,255,.2);
     border-top:6px solid #60a5fa;border-radius:50%;
@@ -135,7 +142,7 @@
 
 <script>
 /* --------------------------------------------------------------
-   UI refs
+   UI references
 -------------------------------------------------------------- */
 const FEED        = document.getElementById('feed');
 const LOADER      = document.getElementById('loader');
@@ -153,15 +160,7 @@ let allData = [], displayedCount = 0, loading = false;
 const BATCH_SIZE = 30;
 
 /* --------------------------------------------------------------
-   Page constants
--------------------------------------------------------------- */
-const PAGE_NAME = 'free images content';
-const PAGE_ID   = 2;
-const APP_NAME = 'YAN_1';
-const DEVELOPER = 'YAN';
-
-/* --------------------------------------------------------------
-   Helper – thumbnail URL for archive.org “details” links
+   Helper – get a thumbnail URL from an Archive.org “details” link
 -------------------------------------------------------------- */
 function getThumbnailUrl(item){
   if (item.archive_url && item.archive_url.includes('archive.org/details/')){
@@ -169,6 +168,33 @@ function getThumbnailUrl(item){
     if (id) return `https://archive.org/services/img/${id}`;
   }
   return '';
+}
+
+/* --------------------------------------------------------------
+   Helper – get the *real* image URL (direct file if possible)
+-------------------------------------------------------------- */
+function getFullImageUrl(item){
+  const url = (item.archive_url || '').trim();
+  const low = url.toLowerCase();
+
+  // Direct image file (.png/.jpg/.jpeg/.gif)
+  if (low.endsWith('.png') || low.endsWith('.jpg') || low.endsWith('.jpeg') || low.endsWith('.gif')) {
+    return url;
+  }
+
+  // Archive.org “details” page – try to compose a download URL.
+  // Most items store the primary file under the same identifier.
+  if (url.includes('archive.org/details/')) {
+    const id = url.split('/details/')[1]?.split(/[/?#]/)[0];
+    if (id) {
+      // Try a common naming pattern – the identifier followed by .jpg.
+      // If it does not exist the request will simply 404, and we’ll fall back.
+      return `https://archive.org/download/${id}/${id}.jpg`;
+    }
+  }
+
+  // Fallback: use the thumbnail (services/img) – it’s always available.
+  return getThumbnailUrl(item);
 }
 
 /* --------------------------------------------------------------
@@ -193,19 +219,17 @@ async function fetchData(){
 }
 
 /* --------------------------------------------------------------
-   Render next batch of cards
+   Render a batch of cards (30 at a time)
 -------------------------------------------------------------- */
 function renderNextBatch(){
   if (loading) return;
   loading = true;
   const batch = allData.slice(displayedCount, displayedCount + BATCH_SIZE);
   batch.forEach((item,i)=>{
-    const absIdx = displayedCount + i;   // absolute index used for sharing
-
     const card = document.createElement('div');
     card.className = 'card';
 
-    /* ----- preview (with optional red “...” overlay) ----- */
+    /* ----- thumbnail preview (with optional red “...” overlay) ----- */
     const thumbUrl = getThumbnailUrl(item);
     const preview = document.createElement('div');
     preview.className = 'preview';
@@ -225,7 +249,7 @@ function renderNextBatch(){
       wrapper.appendChild(ellipsis);
     }
 
-    /* ----- info ----- */
+    /* ----- info block ----- */
     const info = document.createElement('div');
     info.className = 'info';
     info.innerHTML = `
@@ -233,20 +257,53 @@ function renderNextBatch(){
       <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
     `;
 
-    /* ----- share button (tiny icon) ----- */
+    /* ----- Share button ----- */
     const shareBtn = document.createElement('button');
-    shareBtn.className = 'share-symbol';
-    shareBtn.title = 'Share';
-    shareBtn.dataset.index = absIdx;
-    shareBtn.innerHTML = '🔗';
+    shareBtn.className = 'share-btn';
+    shareBtn.textContent = 'Share Image';
+    shareBtn.onclick = () => {
+      // Prevent double‑clicks while we download the image.
+      shareBtn.disabled = true;
+      const originalText = shareBtn.textContent;
+      shareBtn.textContent = 'Preparing…';
 
-    /* ----- open button ----- */
+      const imgUrl = getFullImageUrl(item);
+      downloadImageAsDataURL(imgUrl)
+        .then(dataUrl => {
+          // Build a safe filename – strip spaces/special chars.
+          const safeTitle = (item.title || 'shared_image')
+                            .replace(/[^\w\-]+/g,'_')
+                            .substring(0,30);
+          const fileName = safeTitle + '.jpg';
+          const titleForShare = item.title || 'Shared Image';
+          const extraText = '';   // you can add any extra text you like
+
+          if (window.Android && typeof window.Android.shareImage === 'function') {
+            window.Android.shareImage(dataUrl, fileName, titleForShare, extraText);
+          } else {
+            // Desktop fallback – just open the image in a new tab.
+            window.open(imgUrl, '_blank');
+            alert('Share is only available inside the Android app.');
+          }
+        })
+        .catch(err => {
+          console.error('Error preparing image for share:', err);
+          alert('Failed to prepare image for sharing.');
+        })
+        .finally(() => {
+          shareBtn.disabled = false;
+          shareBtn.textContent = originalText;
+        });
+    };
+
+    /* ----- Open button ----- */
     const openBtn = document.createElement('button');
     openBtn.className = 'open-btn';
     openBtn.textContent = 'Open Image';
     openBtn.onclick = () => openFullscreenImage(item.title, item.archive_url);
 
     /* ----- assemble ----- */
+    // Order: preview → info → share → open
     card.append(wrapper, info, shareBtn, openBtn);
     FEED.appendChild(card);
     requestAnimationFrame(()=>card.classList.add('visible'));
@@ -265,7 +322,7 @@ window.addEventListener('scroll',()=>{
 });
 
 /* --------------------------------------------------------------
-   Full‑screen viewer (pinch/mouse wheel zoom)
+   Full‑screen viewer (pinch / mouse‑wheel zoom)
 -------------------------------------------------------------- */
 let currentScale = 1;
 const MIN_SCALE = 0.5;
@@ -276,7 +333,7 @@ function applyScale(){
   PDF_FRAME.style.transformOrigin = '0 0';
 }
 
-/* Open image */
+/* Open image in full‑screen viewer */
 function openFullscreenImage(title, archiveUrl){
   if (!archiveUrl) return;
   const embedUrl = archiveUrl.includes('archive.org')
@@ -307,7 +364,6 @@ PDF_CONTENT.addEventListener('wheel',e=>{
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
   const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * factor));
   if (newScale !== currentScale){
-    // keep zoom focus under cursor
     const rect = PDF_FRAME.getBoundingClientRect();
     const cx = e.clientX - rect.left;
     const cy = e.clientY - rect.top;
@@ -355,134 +411,25 @@ PDF_CONTENT.addEventListener('touchend',e=>{
 });
 
 /* --------------------------------------------------------------
-   Share logic – Build text & create merged image
+   Utility – fetch an image and convert to Base64 data‑URL
 -------------------------------------------------------------- */
-function buildShareText(img){
-  const title = img.title || 'Untitled image';
-  const imgId = img.id ?? '-';
-  const user  = img.username || '-';
-  return `Page name: ${PAGE_NAME}
-Page ID: ${PAGE_ID}
-Image title: ${title}
-Image ID: ${imgId}
-Username: ${user}
-App name: ${APP_NAME}
-Developer: ${DEVELOPER}`;
+function downloadImageAsDataURL(url){
+  // The fetch must be allowed by CORS (Archive.org sends Access‑Control‑Allow‑Origin: *).
+  return fetch(url, {mode: 'cors'})
+    .then(resp => {
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp.blob();
+    })
+    .then(blob => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result); // result is a data:URL
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    }));
 }
-
-/* Create a single image that contains the archive image + white area with details */
-async function createMergedImage(img){
-  const thumbUrl = getThumbnailUrl(img);
-  if (!thumbUrl) throw new Error('No thumbnail URL available');
-
-  // Load the archive image (thumbnail)
-  const image = await new Promise((res,rej)=>{
-    const i = new Image();
-    i.crossOrigin = 'anonymous';
-    i.onload = ()=>res(i);
-    i.onerror = rej;
-    i.src = thumbUrl;
-  });
-
-  // Limit max width for easier sharing (800px)
-  const MAX_W = 800;
-  const scale = Math.min(1, MAX_W / image.width);
-  const imgW = image.width * scale;
-  const imgH = image.height * scale;
-
-  // Text block configuration
-  const lines = [
-    `Page name: ${PAGE_NAME}`,
-    `Page ID: ${PAGE_ID}`,
-    `Image title: ${img.title || 'Untitled'}`,
-    `Image ID: ${img.id ?? '-'}`,
-    `Username: ${img.username || '-'}`,
-    `App name: ${APP_NAME}`,
-    `Developer: ${DEVELOPER}`
-  ];
-  const PADDING = 20;
-  const LINE_H  = 28;
-  const textBlockHeight = lines.length * LINE_H + PADDING * 2;
-
-  // Final canvas height = image height + text block height
-  const canvas = document.createElement('canvas');
-  canvas.width = imgW;
-  canvas.height = imgH + textBlockHeight;
-  const ctx = canvas.getContext('2d');
-
-  // White background (covers whole canvas)
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw the archive image at the top
-  ctx.drawImage(image, 0, 0, imgW, imgH);
-
-  // Draw white rectangle for text (already white background, but keep for clarity)
-  // We'll just write text over the white area below the image
-
-  // Write text
-  ctx.fillStyle = '#333333';
-  ctx.font = '20px Arial';
-  ctx.textBaseline = 'top';
-  const startY = imgH + PADDING / 2;
-  lines.forEach((txt, idx) => {
-    ctx.fillText(txt, PADDING, startY + idx * LINE_H);
-  });
-
-  // Export to Blob (JPEG)
-  return new Promise((res,rej)=>{
-    canvas.toBlob(blob => {
-      if (blob) res(blob);
-      else rej(new Error('Canvas toBlob failed'));
-    }, 'image/jpeg', 0.92);
-  });
-}
-
-/* Share routine – Android bridge (fallback to plain WhatsApp text) */
-async function shareThumbnail(idx){
-  const img = allData[idx];
-  if (!img) return;
-
-  try{
-    // Create merged image (archive image + details on white background)
-    const blob = await createMergedImage(img);
-    const dataUrl = await new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result);
-      fr.onerror = reject;
-      fr.readAsDataURL(blob);
-    });
-    const fileName = `image_${img.id ?? Date.now()}.jpg`;
-    const shareText = buildShareText(img);
-
-    // Try Android bridge
-    if (window.Android && typeof window.Android.shareImage === 'function'){
-      window.Android.shareImage(dataUrl, fileName, img.title || 'Image', shareText);
-      console.log('✅ Shared via Android bridge');
-      return;
-    }
-  }catch(e){
-    console.warn('Error preparing shared image:', e);
-  }
-
-  // Fallback – open WhatsApp with just text (no image)
-  const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(img))}`;
-  window.open(wa, '_blank');
-}
-
-/* ----- click on tiny share icon ----- */
-FEED.addEventListener('click', e=>{
-  const btn = e.target.closest('.share-symbol');
-  if (!btn) return;
-  e.stopPropagation(); // prevent “Open Image”
-  const idx = Number(btn.dataset.index);
-  if (!Number.isNaN(idx)){
-    shareThumbnail(idx);
-  }
-});
 
 /* --------------------------------------------------------------
-   Kick‑off
+   Kick‑off – fetch JSON data
 -------------------------------------------------------------- */
 fetchData();
 </script>
