@@ -1,403 +1,542 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>📚 Image Stream</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>📚 Image Stream</title>
 
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
-        rel="stylesheet">
+<!-- Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet">
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-bottom: 60px;
-    }
+  body{
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:#fff;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-bottom:60px;
+  }
 
-    header {
-      width: 100%;
-      padding: 16px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      font-size: 1.5em;
-      font-weight: 600;
-      color: #60a5fa;
-      letter-spacing: 1px;
-    }
+  header{
+    width:100%;
+    padding:16px;
+    text-align:center;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(12px);
+    box-shadow:0 4px 20px rgba(0,0,0,.3);
+    font-size:1.5em;
+    font-weight:600;
+    color:#60a5fa;
+    letter-spacing:1px;
+  }
 
-    #feed {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      width: 92%;
-      max-width: 1300px;
-      margin-top: 24px;
-    }
+  #feed{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:16px;
+    width:92%;
+    max-width:1300px;
+    margin-top:24px;
+  }
 
-    .card {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-    }
+  .card{
+    background:rgba(255,255,255,0.08);
+    border-radius:16px;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    transition:transform .25s ease,box-shadow .25s ease;
+  }
+  .card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 8px 20px rgba(0,0,0,.4);
+  }
 
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    }
+  .preview{
+    width:100%;
+    aspect-ratio:16/9;
+    border-radius:12px;
+    overflow:hidden;
+    background:#1e293b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .preview img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
 
-    .preview {
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  /* wrapper needed for the red “...” overlay */
+  .preview-wrapper{
+    position:relative;
+    width:100%;
+  }
+  .ellipsis-overlay{
+    position:absolute;
+    top:4px;
+    left:4px;
+    color:#ff4500;               /* bright dark‑red */
+    font-size:1.8em;
+    font-weight:bold;
+    pointer-events:none;
+  }
 
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+  .info{margin-top:10px;}
+  .title{
+    font-size:1em;
+    font-weight:600;
+    color:#f8fafc;
+    margin-bottom:4px;
+    line-height:1.4;
+    word-break:break-word;
+  }
+  .meta{
+    font-size:.85em;
+    color:#94a3b8;
+    word-break:break-word;
+  }
 
-    .info { margin-top: 10px; }
+  .open-btn{
+    margin-top:10px;
+    background:#60a5fa;
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:10px;
+    font-weight:500;
+    cursor:pointer;
+    transition:background .25s ease;
+    font-size:.95em;
+  }
+  .open-btn:hover{background:#3b82f6;}
 
-    .title {
-      font-size: 1em;
-      font-weight: 600;
-      color: #f8fafc;
-      margin-bottom: 4px;
-      line-height: 1.4;
-      word-break: break-word;
-    }
+  /* tiny share‑icon placed above the “Open Image” button */
+  .share-symbol{
+    background:transparent;
+    border:none;
+    color:#ff4500;
+    cursor:pointer;
+    font-size:1.2em;
+    margin-left:8px;
+    vertical-align:middle;
+  }
 
-    .meta {
-      font-size: 0.85em;
-      color: #94a3b8;
-      word-break: break-word;
-    }
+  .loader{
+    margin-top:60px;
+    border:6px solid rgba(255,255,255,.2);
+    border-top:6px solid #60a5fa;
+    border-radius:50%;
+    width:45px;
+    height:45px;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{
+    0%{transform:rotate(0);}
+    100%{transform:rotate(360deg);}
+  }
 
-    .open-btn {
-      margin-top: 10px;
-      background: #60a5fa;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.25s ease;
-      font-size: 0.95em;
-    }
+  footer{
+    margin-top:30px;
+    color:#94a3b8;
+    font-size:.9em;
+    text-align:center;
+  }
 
-    .open-btn:hover { background: #3b82f6; }
+  /* ---------- Full‑screen viewer ---------- */
+  .pdf-viewer{
+    position:fixed;
+    inset:0;
+    background:#0f172a;
+    z-index:999;
+    display:none;
+    flex-direction:column;
+  }
+  .pdf-viewer.active{display:flex;}
 
-    footer {
-      margin-top: 30px;
-      color: #94a3b8;
-      font-size: 0.9em;
-      text-align: center;
-    }
+  .pdf-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 14px;
+    background:rgba(15,23,42,.9);
+    border-bottom:1px solid rgba(255,255,255,.1);
+  }
+  .pdf-toolbar h2{
+    font-size:1em;
+    color:#93c5fd;
+    font-weight:500;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:80%;
+  }
+  .close-full{
+    background:#ef4444;
+    border:none;
+    color:#fff;
+    font-size:1.2em;
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    cursor:pointer;
+    transition:background .25s ease;
+  }
+  .close-full:hover{background:#dc2626;}
 
-    .loader {
-      margin-top: 60px;
-      border: 6px solid rgba(255, 255, 255, 0.2);
-      border-top: 6px solid #60a5fa;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0%   { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .pdf-viewer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #0f172a;
-      z-index: 999;
-      display: none;
-      flex-direction: column;
-    }
-
-    .pdf-viewer.active { display: flex; }
-
-    .pdf-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 14px;
-      background: rgba(15, 23, 42, 0.9);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .pdf-toolbar h2 {
-      font-size: 1em;
-      color: #93c5fd;
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 80%;
-    }
-
-    .close-full {
-      background: #ef4444;
-      border: none;
-      color: white;
-      font-size: 1.2em;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background 0.25s ease;
-    }
-
-    .close-full:hover { background: #dc2626; }
-
-    .pdf-iframe {
-      flex-grow: 1;
-      border: none;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+  .pdf-content{
+    flex-grow:1;
+    overflow:auto;               /* pinch‑to‑zoom works natively */
+  }
+  .pdf-iframe{
+    width:100%;
+    height:100%;
+    border:none;
+  }
+</style>
 </head>
 
 <body>
-  <header>📚 Image Stream</header>
-  <div id="feed"></div>
-  <div id="loader" class="loader"></div>
-  <footer>Powered by Archive & Your Backend</footer>
+<header>📚 Image Stream</header>
 
-  <!-- Fullscreen Image Viewer -->
-  <div id="pdfViewer" class="pdf-viewer">
-    <div class="pdf-toolbar">
-      <h2 id="pdfTitle">Image Viewer</h2>
-      <button class="close-full" id="closeViewer">&times;</button>
-    </div>
+<div id="feed"></div>
+<div id="loader" class="loader"></div>
+
+<footer>© 2026 Powered by Archive &amp; Your Backend</footer>
+
+<!-- Fullscreen Image Viewer -->
+<div id="pdfViewer" class="pdf-viewer">
+  <div class="pdf-toolbar">
+    <h2 id="pdfTitle">Image Viewer</h2>
+    <button class="close-full" id="closeViewer">&times;</button>
+  </div>
+  <div class="pdf-content">
     <iframe id="pdfFrame" class="pdf-iframe" src=""></iframe>
   </div>
+</div>
 
-  <script>
-    /* ------------------------------------------------------------------
-       Global UI references
-    ------------------------------------------------------------------ */
-    const FEED        = document.getElementById('feed');
-    const LOADER      = document.getElementById('loader');
-    const VIEWER      = document.getElementById('pdfViewer');
-    const PDF_FRAME   = document.getElementById('pdfFrame');
-    const PDF_TITLE   = document.getElementById('pdfTitle');
-    const CLOSE_VIEWER = document.getElementById('closeViewer');
+<script>
+/* --------------------------------------------------------------
+   Global UI references
+-------------------------------------------------------------- */
+const FEED        = document.getElementById('feed');
+const LOADER      = document.getElementById('loader');
+const VIEWER      = document.getElementById('pdfViewer');
+const PDF_FRAME   = document.getElementById('pdfFrame');
+const PDF_TITLE   = document.getElementById('pdfTitle');
+const CLOSE_VIEWER = document.getElementById('closeViewer');
 
-    /* ------------------------------------------------------------------
-       Backend / paging
-    ------------------------------------------------------------------ */
-    const BACKEND_URL = 'https://images_displaying_backend.erenyeager6880.workers.dev';
-    let allData = [], currentIndex = 0, loading = false;
-    const BATCH_SIZE = 30;
+/* --------------------------------------------------------------
+   Backend / paging
+-------------------------------------------------------------- */
+const BACKEND_URL = 'https://images_displaying_backend.erenyeager6880.workers.dev';
+let allData = [], displayedCount = 0, loading = false;
+const BATCH_SIZE = 30;
 
-    /* ------------------------------------------------------------------
-       Reward‑ad click counter (5 clicks → ad)
-    ------------------------------------------------------------------ */
-    let openCount = 0;    // number of times "Open Image" has been pressed
+/* --------------------------------------------------------------
+   Share‑page constants (new values)
+-------------------------------------------------------------- */
+const PAGE_NAME = 'free images content';
+const PAGE_ID   = 2;
 
-    /* ------------------------------------------------------------------
-       Fetch JSON data from the backend
-    ------------------------------------------------------------------ */
-    async function fetchData() {
-      try {
-        const res  = await fetch(BACKEND_URL);
-        const data = await res.json();
-        LOADER.style.display = 'none';
+/* --------------------------------------------------------------
+   Helper – get thumbnail URL from archive.org "details" link
+-------------------------------------------------------------- */
+function getThumbnailUrl(item){
+  if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
+    const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
+    if (identifier) return `https://archive.org/services/img/${identifier}`;
+  }
+  return '';
+}
 
-        if (!data || data.length === 0) {
-          FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No Images found 😢</p>";
-          return;
-        }
+/* --------------------------------------------------------------
+   Fetch JSON data from the backend
+-------------------------------------------------------------- */
+async function fetchData() {
+  try{
+    const res  = await fetch(BACKEND_URL);
+    const data = await res.json();
 
-        allData = data;
-        renderNextBatch();
+    LOADER.style.display = 'none';
 
-        // Pre‑load a rewarded ad (if running inside the Android WebView)
-        if (window.Android && typeof Android.preloadRewardedAd === 'function') {
-          Android.preloadRewardedAd();
-        }
-      } catch (e) {
-        LOADER.style.display = 'none';
-        FEED.innerHTML = `<p style='text-align:center;color:#f87171'>Error loading data 😞</p>`;
-        console.error(e);
-      }
+    if (!data || data.length===0){
+      FEED.innerHTML = "<p style='text-align:center;color:#94a3b8'>No Images found 😢</p>";
+      return;
     }
 
-    /* ------------------------------------------------------------------
-       Render a batch of cards (30 per batch)
-    ------------------------------------------------------------------ */
-    function renderNextBatch() {
-      if (loading) return;
-      loading = true;
+    allData = data;
+    renderNextBatch();
+  }catch(e){
+    LOADER.style.display = 'none';
+    FEED.innerHTML = "<p style='text-align:center;color:#f87171'>Error loading data 😞</p>";
+    console.error(e);
+  }
+}
 
-      const nextBatch = allData.slice(currentIndex, currentIndex + BATCH_SIZE);
-      nextBatch.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'card';
+/* --------------------------------------------------------------
+   Render a batch of cards (30 per batch)
+-------------------------------------------------------------- */
+function renderNextBatch(){
+  if (loading) return;
+  loading = true;
 
-        const preview = document.createElement('div');
-        preview.className = 'preview';
+  const batch = allData.slice(displayedCount, displayedCount + BATCH_SIZE);
 
-        // ----- Thumbnail (archive.org) -----
-        let thumbUrl = '';
-        if (item.archive_url && item.archive_url.includes('archive.org/details/')) {
-          const identifier = item.archive_url.split('/details/')[1]?.split(/[/?#]/)[0];
-          if (identifier) {
-            thumbUrl = `https://archive.org/services/img/${identifier}`;
-          }
-        }
-        if (thumbUrl) {
-          preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
-        } else {
-          preview.textContent = 'No Preview Available';
-        }
+  batch.forEach((item,i)=>{
+    const absIdx = displayedCount + i;   // absolute index for share button
 
-        // ----- Info -----
-        const info = document.createElement('div');
-        info.className = 'info';
-        info.innerHTML = `
-          <div class="title">${item.title || 'Untitled Image'}</div>
-          <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
-        `;
+    const card = document.createElement('div');
+    card.className = 'card';
 
-        // ----- Open button (wrapped) -----
-        const openBtn = document.createElement('button');
-        openBtn.className = 'open-btn';
-        openBtn.textContent = 'Open Image';
-        openBtn.onclick = () => handleOpenImage(item.title, item.archive_url);
+    /* ---- Thumbnail & optional red “...” overlay ---- */
+    const thumbUrl = getThumbnailUrl(item);
+    const preview = document.createElement('div');
+    preview.className = 'preview';
+    if (thumbUrl){
+      preview.innerHTML = `<img src="${thumbUrl}" alt="Thumbnail" loading="lazy">`;
+    }else{
+      preview.textContent = 'No Preview Available';
+    }
 
-        card.append(preview, info, openBtn);
-        FEED.appendChild(card);
+    const previewWrapper = document.createElement('div');
+    previewWrapper.className = 'preview-wrapper';
+    previewWrapper.appendChild(preview);
+
+    const lowerUrl = item.archive_url?.toLowerCase() || '';
+    if (lowerUrl.endsWith('.png') || lowerUrl.endsWith('.jpg')){
+      const ellipsis = document.createElement('div');
+      ellipsis.className = 'ellipsis-overlay';
+      ellipsis.textContent = '...';
+      previewWrapper.appendChild(ellipsis);
+    }
+
+    /* ---- Info ---- */
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.innerHTML = `
+      <div class="title">${item.title || 'Untitled Image'}</div>
+      <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
+    `;
+
+    /* ---- Share symbol (tiny) ---- */
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'share-symbol';
+    shareBtn.title = 'Share';
+    shareBtn.dataset.index = absIdx;
+    shareBtn.innerHTML = '🔗';
+
+    /* ---- Open button ---- */
+    const openBtn = document.createElement('button');
+    openBtn.className = 'open-btn';
+    openBtn.textContent = 'Open Image';
+    openBtn.onclick = () => openFullscreenImage(item.title, item.archive_url);
+
+    /* ---- Assemble card ---- */
+    card.append(previewWrapper, info, shareBtn, openBtn);
+    FEED.appendChild(card);
+    requestAnimationFrame(()=>card.classList.add('visible'));
+  });
+
+  displayedCount += batch.length;
+  loading = false;
+}
+
+/* --------------------------------------------------------------
+   Infinite scroll – load next batch when near bottom
+-------------------------------------------------------------- */
+window.addEventListener('scroll',()=>{
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200){
+    if (displayedCount < allData.length && !loading){
+      renderNextBatch();
+    }
+  }
+});
+
+/* --------------------------------------------------------------
+   Image viewer – fullscreen iframe (pinch‑to‑zoom works natively)
+-------------------------------------------------------------- */
+function openFullscreenImage(title, archiveUrl){
+  if (!archiveUrl) return;
+  const embedUrl = archiveUrl.includes('archive.org')
+    ? archiveUrl.replace('/details/','/embed/')
+    : archiveUrl;
+  PDF_TITLE.textContent = title || 'Image Viewer';
+  PDF_FRAME.src = embedUrl;
+  VIEWER.classList.add('active');
+}
+
+/* --------------------------------------------------------------
+   Viewer controls
+-------------------------------------------------------------- */
+CLOSE_VIEWER.onclick = () => {
+  VIEWER.classList.remove('active');
+  PDF_FRAME.src = '';
+};
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    VIEWER.classList.remove('active');
+    PDF_FRAME.src = '';
+  }
+});
+
+/* --------------------------------------------------------------
+   ------- SHARE LOGIC (copied from the video page) -------
+-------------------------------------------------------------- */
+
+/**
+ * Build the plain‑text payload used for WhatsApp fallback.
+ */
+function buildShareText(img){
+  const title = img.title || 'Untitled image';
+  const imgId = img.id ?? '-';
+  const user  = img.username || '-';
+  return `Page name: ${PAGE_NAME}
+Page ID: ${PAGE_ID}
+Image title: ${title}
+Image ID: ${imgId}
+Username: ${user}
+App name: YAN_1
+Developer: YAN`;
+}
+
+/**
+ * Create a composite JPEG (thumbnail + required metadata) – returns a Blob.
+ */
+async function createCompositeImage(img){
+  const thumbUrl = getThumbnailUrl(img);
+  if (!thumbUrl) throw new Error('No thumbnail URL');
+
+  // ----- load thumbnail (CORS‑enabled) -----
+  const thumbnail = await new Promise((res,rej)=>{
+    const i = new Image();
+    i.crossOrigin = 'anonymous';
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = thumbUrl;
+  });
+
+  // ----- calculate canvas size -----
+  const MAX_W = 800;
+  const scale = Math.min(1, MAX_W / thumbnail.width);
+  const w = thumbnail.width * scale;
+  const h = thumbnail.height * scale;
+
+  const lines = [
+    `Page name: ${PAGE_NAME}`,
+    `Page ID: ${PAGE_ID}`,
+    `Image title: ${img.title || 'Untitled'}`,
+    `Image ID: ${img.id ?? '-'}`,
+    `Username: ${img.username || '-'}`,
+    `App name: YAN_1`,
+    `Developer: YAN`
+  ];
+  const PADDING = 20;
+  const LINE_H = 28;
+  const textHeight = lines.length * LINE_H + PADDING;
+  const canvasH = h + textHeight;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = canvasH;
+  const ctx = canvas.getContext('2d');
+
+  // white background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,w,canvasH);
+
+  // thumbnail on top
+  ctx.drawImage(thumbnail,0,0,w,h);
+
+  // text block
+  ctx.fillStyle = '#333333';
+  ctx.font = '20px Arial';
+  ctx.textBaseline = 'top';
+  const startY = h + PADDING/2;
+  lines.forEach((txt,idx)=>ctx.fillText(txt, PADDING, startY + idx*LINE_H));
+
+  // export to Blob
+  return new Promise((res,rej)=>{
+    canvas.toBlob(blob => {
+      if (blob) res(blob);
+      else rej(new Error('Canvas toBlob failed'));
+    },'image/jpeg',0.92);
+  });
+}
+
+/**
+ * Share routine:
+ *   1️⃣ Web‑Share API (if available)
+ *   2️⃣ Android bridge (if present)
+ *   3️⃣ WhatsApp text fallback
+ */
+async function shareThumbnail(idx){
+  const img = allData[idx];
+  if (!img) return;
+
+  // ------- 1️⃣ Web‑Share -------
+  try{
+    if (navigator.canShare && navigator.canShare({files:[]})){
+      const blob = await createCompositeImage(img);
+      const file = new File([blob], `image_${img.id ?? Date.now()}.jpg`, {type:blob.type});
+      if (navigator.share && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title: img.title || ''});
+        console.log('✅ shared via Web‑Share API');
+        return;
+      }
+    }
+  }catch(e){
+    console.warn('Web‑Share not usable', e);
+  }
+
+  // ------- 2️⃣ Android bridge -------
+  if (window.Android && typeof window.Android.shareImage === 'function'){
+    try{
+      const blob = await createCompositeImage(img);
+      const dataUrl = await new Promise((res,rej)=>{
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(blob);
       });
-
-      currentIndex += nextBatch.length;
-      loading = false;
+      const fileName = `image_${img.id ?? Date.now()}.jpg`;
+      const text     = buildShareText(img);
+      window.Android.shareImage(dataUrl, fileName, img.title || 'Image', text);
+      console.log('✅ delegated share to Android bridge');
+      return;
+    }catch(e){
+      console.error('Android bridge share failed – falling back', e);
     }
+  }
 
-    /* ------------------------------------------------------------------
-       Infinite scroll – load the next batch when the user reaches bottom
-    ------------------------------------------------------------------ */
-    window.addEventListener('scroll', () => {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        if (currentIndex < allData.length && !loading) {
-          renderNextBatch();
-        }
-      }
-    });
+  // ------- 3️⃣ WhatsApp fallback -------
+  const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(buildShareText(img))}`;
+  window.open(wa, '_blank');
+}
 
-    /* ------------------------------------------------------------------
-       Image viewer (fullscreen PDF/iframe)
-    ------------------------------------------------------------------ */
-    function openFullscreenImage(title, archiveUrl) {
-      if (!archiveUrl) return;
-      const embedUrl = archiveUrl.includes('archive.org')
-        ? archiveUrl.replace('/details/', '/embed/')
-        : archiveUrl;
-      PDF_TITLE.textContent = title || 'Image Viewer';
-      PDF_FRAME.src = embedUrl;
-      VIEWER.classList.add('active');
-    }
+/* --------------------------------------------------------------
+   Delegated click listener – catches clicks on share symbols
+-------------------------------------------------------------- */
+FEED.addEventListener('click', e => {
+  const shareBtn = e.target.closest('.share-symbol');
+  if (!shareBtn) return;
+  e.stopPropagation();               // prevent “Open Image” activation
+  const idx = Number(shareBtn.dataset.index);
+  if (!Number.isNaN(idx)){
+    shareThumbnail(idx);
+  }
+});
 
-    /* ------------------------------------------------------------------
-       Core click‑handler (+ reward‑ad logic)
-    ------------------------------------------------------------------ */
-    function handleOpenImage(title, archiveUrl) {
-      openCount++;
-
-      if (openCount >= 5) {
-        // Reset counter first
-        openCount = 0;
-
-        // 1️⃣ Open image immediately
-        openFullscreenImage(title, archiveUrl);
-
-        // 2️⃣ Ask the Android side to launch a rewarded ad
-        const embedUrl = archiveUrl.includes('archive.org')
-          ? archiveUrl.replace('/details/', '/embed/')
-          : archiveUrl;
-
-        if (window.Android && typeof Android.requestRewardedAd === 'function') {
-          Android.requestRewardedAd(embedUrl);
-        } else {
-          console.warn('Android bridge unavailable – cannot show rewarded ad.');
-        }
-      } else {
-        // Normal behaviour – just open the image.
-        openFullscreenImage(title, archiveUrl);
-      }
-    }
-
-    /* ------------------------------------------------------------------
-       Viewer controls
-    ------------------------------------------------------------------ */
-    CLOSE_VIEWER.onclick = () => {
-      VIEWER.classList.remove('active');
-      PDF_FRAME.src = '';
-    };
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        VIEWER.classList.remove('active');
-        PDF_FRAME.src = '';
-      }
-    });
-
-    /* ------------------------------------------------------------------
-       Callbacks invoked from the native Android side
-       (the native code triggers these via evaluateJavascript)
-    ------------------------------------------------------------------ */
-    function onAdPreloaded() {
-      console.log('Rewarded ad preloaded.');
-    }
-
-    function onAdFailedToPreload() {
-      console.warn('Failed to preload rewarded ad.');
-    }
-
-    function onAdNotAvailable() {
-      console.warn('No rewarded ad available right now.');
-    }
-
-    // Called when the rewarded ad finishes and the user earned the reward.
-    // The URL argument is the same that we passed to requestRewardedAd()
-    // (we already opened the image, so we just log here).
-    function onAdCompleted(url) {
-      console.log('Rewarded ad completed – user earned reward.');
-      // Additional reward handling can be placed here if desired.
-    }
-
-    /* ------------------------------------------------------------------
-       Kick‑off
-    ------------------------------------------------------------------ */
-    fetchData();
-  </script>
+/* --------------------------------------------------------------
+   Kick‑off
+-------------------------------------------------------------- */
+fetchData();
+</script>
 </body>
 </html>
