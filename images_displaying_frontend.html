@@ -85,9 +85,7 @@
     border-top:6px solid #60a5fa;border-radius:50%;
     width:45px;height:45px;animation:spin 1s linear infinite;
   }
-  @keyframes spin{
-    0%{transform:rotate(0);}100%{transform:rotate(360deg);}
-  }
+  @keyframes spin{0%{transform:rotate(0);}100%{transform:rotate(360deg);}}
   footer{
     margin-top:30px;color:#94a3b8;font-size:.9em;text-align:center;
   }
@@ -172,28 +170,27 @@ function getThumbnailUrl(item){
 
 /* --------------------------------------------------------------
    Helper – get the *real* image URL (direct file if possible)
+   URL is encoded so that spaces or special characters do not break fetch.
 -------------------------------------------------------------- */
 function getFullImageUrl(item){
-  const url = (item.archive_url || '').trim();
-  const low = url.toLowerCase();
+  const raw = (item.archive_url || '').trim();
+  if (!raw) return '';
+  const low = raw.toLowerCase();
 
-  // Direct image file (.png/.jpg/.jpeg/.gif)
-  if (low.endsWith('.png') || low.endsWith('.jpg') || low.endsWith('.jpeg') || low.endsWith('.gif')) {
-    return url;
+  // Direct image file (png/jpg/jpeg/gif/webp/svg)
+  if (/\.(png|jpe?g|gif|webp|svg)$/i.test(low)) {
+    return encodeURI(raw);
   }
 
-  // Archive.org “details” page – try to compose a download URL.
-  // Most items store the primary file under the same identifier.
-  if (url.includes('archive.org/details/')) {
-    const id = url.split('/details/')[1]?.split(/[/?#]/)[0];
+  // Archive.org “details” page – guess a JPG with the same identifier
+  if (raw.includes('archive.org/details/')) {
+    const id = raw.split('/details/')[1]?.split(/[/?#]/)[0];
     if (id) {
-      // Try a common naming pattern – the identifier followed by .jpg.
-      // If it does not exist the request will simply 404, and we’ll fall back.
-      return `https://archive.org/download/${id}/${id}.jpg`;
+      return encodeURI(`https://archive.org/download/${id}/${id}.jpg`);
     }
   }
 
-  // Fallback: use the thumbnail (services/img) – it’s always available.
+  // Fallback: thumbnail (always available)
   return getThumbnailUrl(item);
 }
 
@@ -224,8 +221,9 @@ async function fetchData(){
 function renderNextBatch(){
   if (loading) return;
   loading = true;
+
   const batch = allData.slice(displayedCount, displayedCount + BATCH_SIZE);
-  batch.forEach((item,i)=>{
+  batch.forEach(item => {
     const card = document.createElement('div');
     card.className = 'card';
 
@@ -257,57 +255,52 @@ function renderNextBatch(){
       <div class="meta">👤 ${item.username || 'Anonymous'} • 🆔 ${item.id || 'N/A'}</div>
     `;
 
-    /* ----- Share button ----- */
+    /* ----- Share button (with fallback & encoding) ----- */
     const shareBtn = document.createElement('button');
     shareBtn.className = 'share-btn';
     shareBtn.textContent = 'Share Image';
-    shareBtn.onclick = () => {
-      // Prevent double‑clicks while we download the image.
+    shareBtn.onclick = async () => {
       shareBtn.disabled = true;
-      const originalText = shareBtn.textContent;
+      const oldTxt = shareBtn.textContent;
       shareBtn.textContent = 'Preparing…';
+      try {
+        const dataUrl = await fetchImageDataUrl(item); // ← new helper
+        const safeTitle = (item.title || 'shared_image')
+              .replace(/[^\w\-]+/g,'_')
+              .substring(0,30);
+        const fileName = `${safeTitle}.jpg`;
+        const titleForShare = item.title || 'Shared Image';
 
-      const imgUrl = getFullImageUrl(item);
-      downloadImageAsDataURL(imgUrl)
-        .then(dataUrl => {
-          // Build a safe filename – strip spaces/special chars.
-          const safeTitle = (item.title || 'shared_image')
-                            .replace(/[^\w\-]+/g,'_')
-                            .substring(0,30);
-          const fileName = safeTitle + '.jpg';
-          const titleForShare = item.title || 'Shared Image';
-          const extraText = '';   // you can add any extra text you like
-
-          if (window.Android && typeof window.Android.shareImage === 'function') {
-            window.Android.shareImage(dataUrl, fileName, titleForShare, extraText);
-          } else {
-            // Desktop fallback – just open the image in a new tab.
-            window.open(imgUrl, '_blank');
-            alert('Share is only available inside the Android app.');
-          }
-        })
-        .catch(err => {
-          console.error('Error preparing image for share:', err);
-          alert('Failed to prepare image for sharing.');
-        })
-        .finally(() => {
-          shareBtn.disabled = false;
-          shareBtn.textContent = originalText;
-        });
+        if (window.Android && typeof window.Android.shareImage === 'function') {
+          // Android WebView bridge
+          window.Android.shareImage(dataUrl, fileName, titleForShare, '');
+        } else {
+          // Desktop fallback – open a blob URL in a new tab
+          const blob = dataURLtoBlob(dataUrl);
+          const url  = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          alert('Sharing is only available inside the Android app.');
+        }
+      }catch(e){
+        console.error('Image share failed:', e);
+        alert('Failed to prepare image for sharing.');
+      }finally{
+        shareBtn.disabled = false;
+        shareBtn.textContent = oldTxt;
+      }
     };
 
-    /* ----- Open button ----- */
+    /* ----- Open button (full‑screen viewer) ----- */
     const openBtn = document.createElement('button');
     openBtn.className = 'open-btn';
     openBtn.textContent = 'Open Image';
     openBtn.onclick = () => openFullscreenImage(item.title, item.archive_url);
 
     /* ----- assemble ----- */
-    // Order: preview → info → share → open
     card.append(wrapper, info, shareBtn, openBtn);
     FEED.appendChild(card);
-    requestAnimationFrame(()=>card.classList.add('visible'));
   });
+
   displayedCount += batch.length;
   loading = false;
 }
@@ -315,8 +308,8 @@ function renderNextBatch(){
 /* --------------------------------------------------------------
    Infinite scroll
 -------------------------------------------------------------- */
-window.addEventListener('scroll',()=>{
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200){
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
     if (displayedCount < allData.length && !loading) renderNextBatch();
   }
 });
@@ -337,8 +330,8 @@ function applyScale(){
 function openFullscreenImage(title, archiveUrl){
   if (!archiveUrl) return;
   const embedUrl = archiveUrl.includes('archive.org')
-    ? archiveUrl.replace('/details/','/embed/')
-    : archiveUrl;
+        ? archiveUrl.replace('/details/','/embed/')
+        : archiveUrl;
   PDF_TITLE.textContent = title || 'Image Viewer';
   PDF_FRAME.src = embedUrl;
   VIEWER.classList.add('active');
@@ -354,12 +347,12 @@ function closeViewer(){
   applyScale();
 }
 CLOSE_VIEWER.onclick = closeViewer;
-document.addEventListener('keydown',e=>{
+document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeViewer();
 });
 
 /* ----- mouse‑wheel zoom ----- */
-PDF_CONTENT.addEventListener('wheel',e=>{
+PDF_CONTENT.addEventListener('wheel', e => {
   e.preventDefault();
   const factor = e.deltaY < 0 ? 1.1 : 0.9;
   const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, currentScale * factor));
@@ -385,7 +378,7 @@ function getDist(t1,t2){
   const dy = t2.clientY - t1.clientY;
   return Math.hypot(dx,dy);
 }
-PDF_CONTENT.addEventListener('touchstart',e=>{
+PDF_CONTENT.addEventListener('touchstart', e => {
   if (e.touches.length===2){
     pinchStartDist = getDist(e.touches[0], e.touches[1]);
     pinchStartScale = currentScale;
@@ -393,7 +386,7 @@ PDF_CONTENT.addEventListener('touchstart',e=>{
   }
 },{passive:false});
 
-PDF_CONTENT.addEventListener('touchmove',e=>{
+PDF_CONTENT.addEventListener('touchmove', e => {
   if (e.touches.length===2 && pinchStartDist){
     const curDist = getDist(e.touches[0], e.touches[1]);
     const scaleFactor = curDist / pinchStartDist;
@@ -406,7 +399,7 @@ PDF_CONTENT.addEventListener('touchmove',e=>{
   }
 },{passive:false});
 
-PDF_CONTENT.addEventListener('touchend',e=>{
+PDF_CONTENT.addEventListener('touchend', e => {
   if (e.touches.length<2) pinchStartDist = null;
 });
 
@@ -414,18 +407,46 @@ PDF_CONTENT.addEventListener('touchend',e=>{
    Utility – fetch an image and convert to Base64 data‑URL
 -------------------------------------------------------------- */
 function downloadImageAsDataURL(url){
-  // The fetch must be allowed by CORS (Archive.org sends Access‑Control‑Allow‑Origin: *).
-  return fetch(url, {mode: 'cors'})
+  // All URLs we pass in are already encoded.
+  return fetch(url, {mode:'cors'})
     .then(resp => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       return resp.blob();
     })
     .then(blob => new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result); // result is a data:URL
+      reader.onloadend = () => resolve(reader.result);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     }));
+}
+
+/* --------------------------------------------------------------
+   Helper – try full image first, then thumbnail
+-------------------------------------------------------------- */
+async function fetchImageDataUrl(item){
+  const candidates = [getFullImageUrl(item), getThumbnailUrl(item)].filter(Boolean);
+  for (const url of candidates){
+    try{
+      return await downloadImageAsDataURL(url);
+    }catch(e){
+      // try the next candidate
+    }
+  }
+  throw new Error('All image fetch attempts failed');
+}
+
+/* --------------------------------------------------------------
+   Helper – convert a data‑URL to a Blob (desktop fallback)
+-------------------------------------------------------------- */
+function dataURLtoBlob(dataurl){
+  const [header, data] = dataurl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(data);
+  const len = binary.length;
+  const arr = new Uint8Array(len);
+  for (let i = 0; i < len; i++) arr[i] = binary.charCodeAt(i);
+  return new Blob([arr], {type:mime});
 }
 
 /* --------------------------------------------------------------
